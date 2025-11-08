@@ -124,7 +124,17 @@ async def main():
             if txn_data.get("transactions"):
                 txn = txn_data["transactions"][0]
                 print(f"  Transaction ID: {txn.get('id')}")
-                print(f"  Amount: ${txn.get('amount'):.2f}")
+                
+                # Calculate amount if not provided by API
+                amount = txn.get('amount')
+                if amount is None:
+                    # Calculate from items
+                    amount = sum(
+                        item.get('price', 0) * item.get('quantity', 1) 
+                        for item in txn.get('items', [])
+                    )
+                
+                print(f"  Amount: ${amount:.2f}")
                 print(f"  SKU Items: {len(txn.get('items', []))}")
                 for item in txn.get("items", []):
                     print(f"    - {item.get('name')} (SKU: {item.get('sku')})")

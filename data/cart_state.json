@@ -1,0 +1,48 @@
+{
+  "platform_carts": {
+    "instacart": {
+      "platform_name": "instacart",
+      "platform_id": 40,
+      "items": [],
+      "subtotal": 0.0,
+      "delivery_fee": 0.0,
+      "service_fee": 0.0,
+      "tax": 0.0,
+      "total": 0.0,
+      "timestamp": "2025-11-08T12:36:08.142221",
+      "session_valid": true
+    },
+    "ubereats": {
+      "platform_name": "ubereats",
+      "platform_id": 36,
+      "items": [],
+      "subtotal": 0.0,
+      "delivery_fee": 0.0,
+      "service_fee": 0.0,
+      "tax": 0.0,
+      "total": 0.0,
+      "timestamp": "2025-11-08T12:36:09.049570",
+      "session_valid": true
+    },
+    "doordash": {
+      "platform_name": "doordash",
+      "platform_id": 19,
+      "items": [],
+      "subtotal": 0.0,
+      "delivery_fee": 0.0,
+      "service_fee": 0.0,
+      "tax": 0.0,
+      "total": 0.0,
+      "timestamp": "2025-11-08T12:36:09.616808",
+      "session_valid": true
+    }
+  },
+  "diffs": [],
+  "ingredients_requested": [
+    "milk",
+    "eggs",
+    "paneer",
+    "tomatoes"
+  ],
+  "saved_at": "2025-11-08T12:36:10.508448"
+}

@@ -1,0 +1,4 @@
+2025/11/08-12:36:02.160 352c Reusing MANIFEST D:\STUFF\Projects\HackPton_Delivery_App\user_data_doordash\Default\IndexedDB\https_www.doordash.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/11/08-12:36:02.162 352c Recovering log #4
+2025/11/08-12:36:02.190 352c Reusing old log D:\STUFF\Projects\HackPton_Delivery_App\user_data_doordash\Default\IndexedDB\https_www.doordash.com_0.indexeddb.leveldb/000004.log 
+2025/11/08-12:36:02.394 4d0 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)

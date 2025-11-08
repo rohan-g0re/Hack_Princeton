@@ -13,22 +13,24 @@ from typing import List
 
 logger = logging.getLogger(__name__)
 
-# BrowserUse LLM setup with Gemini
-from langchain_google_genai import ChatGoogleGenerativeAI
+# BrowserUse LLM setup with Gemini - using modern Langchain approach
+from langchain.chat_models import init_chat_model
 from dotenv import load_dotenv
 
 load_dotenv()
 
 def get_llm():
-    """Get configured LLM for BrowserUse - using Gemini"""
+    """Get configured LLM for BrowserUse - using Gemini with proper provider interface"""
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY environment variable not set")
     
-    return ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",  # Fast and cost-effective
-        google_api_key=api_key,
-        temperature=0.1  # Low temperature for consistent results
+    # Use init_chat_model for proper provider interface that BrowserUse expects
+    return init_chat_model(
+        "gemini-1.5-flash",
+        model_provider="google_genai",
+        api_key=api_key,
+        temperature=0.1
     )
 
 class SearchOrderAgent:

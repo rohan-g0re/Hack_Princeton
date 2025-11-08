@@ -1,5 +1,10 @@
 user_data/
-venv/
+user_data_instacart/
+user_data_ubereats/
+user_data_doordash/venv/
+
+
+
 .env
 .venv/
 .pytest_cache/

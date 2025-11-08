@@ -1,0 +1,8 @@
+INSTACART CART DETAILS
+==================================================
+
+Item 1: Little Leaf Farms Spring Mix | Qty: 1 | Price: $3.99 | Size: 4 oz
+
+==================================================
+Extraction Date: The current date is: Sat 11/08/2025 
+Enter the new date: (mm-dd-yy)

@@ -1,52 +1,8 @@
 {
   "shopping_list": [
     {
-      "item": "Romaine Lettuce",
+      "item": "Lettuce",
       "quantity": "1 large head"
-    },
-    {
-      "item": "Croutons",
-      "quantity": "1 cup"
-    },
-    {
-      "item": "Parmesan Cheese (grated or shaved)",
-      "quantity": "0.5 cup"
-    },
-    {
-      "item": "Garlic Cloves",
-      "quantity": 2
-    },
-    {
-      "item": "Fresh Lemon Juice",
-      "quantity": "2 tablespoons"
-    },
-    {
-      "item": "Dijon Mustard",
-      "quantity": "1.5 teaspoons"
-    },
-    {
-      "item": "Worcestershire Sauce",
-      "quantity": "1 teaspoon"
-    },
-    {
-      "item": "Anchovy Paste",
-      "quantity": "1 teaspoon"
-    },
-    {
-      "item": "Large Egg Yolk",
-      "quantity": 1
-    },
-    {
-      "item": "Extra-Virgin Olive Oil",
-      "quantity": "0.5 cup"
-    },
-    {
-      "item": "Kosher Salt",
-      "quantity": "0.5 teaspoon"
-    },
-    {
-      "item": "Freshly Ground Black Pepper",
-      "quantity": "0.5 teaspoon"
     }
   ]
 }

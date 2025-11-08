@@ -1,0 +1,13 @@
+{
+  "item_count": 1,
+  "subtotal": "N/A",
+  "cart_items": [
+    {
+      "name": "Item 1: Little Leaf Farms Spring Mix",
+      "quantity": 1,
+      "price": "3.99",
+      "size": "4 oz"
+    }
+  ],
+  "extraction_successful": true
+}

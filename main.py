@@ -1,166 +1,67 @@
-# main.py
-
-import asyncio
-import logging
-from models.cart_models import CartState
-from knot_api.client import get_knot_client
-from knot_api.config import MERCHANT_IDS
 import sys
-import argparse
+import subprocess
+from pathlib import Path
 
-# Setup logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
 
-logger = logging.getLogger(__name__)
-
-async def main():
+def ask_yes_no(prompt: str) -> bool:
     """
-    Complete workflow for grocery delivery super app
-    
-    Steps:
-    1. User provides ingredients
-    2. Search & Order agents add items to all platform carts (parallel)
-    3. Cart Detail agents extract cart info (parallel)
-    4. [User edits carts in UI - simulated with diffs]
-    5. Edit Cart agents apply diffs (parallel)
-    6. Cart Detail agents re-extract final cart info
-    7. Mock payment with Knot API transaction demonstration
+    Prompt user with a yes/no question until a valid response is given.
+    Returns True for yes, False for no.
     """
-    
-    # Parse command line arguments
-    parser = argparse.ArgumentParser(description='Grocery Delivery Super App - Nova Auto')
-    parser.add_argument('ingredients', nargs='*', 
-                       help='Ingredients to order (e.g., milk eggs bread)')
-    
-    args = parser.parse_args()
-    
-    # Nova agents only
-    from orchestrator_nova import ParallelOrchestratorNova as Orchestrator
-    
-    print("\n" + "=" * 70)
-    print("GROCERY DELIVERY SUPER APP - NOVA ACT")
-    print("=" * 70)
-    
-    # STEP 1: Get ingredients
-    if args.ingredients:
-        ingredients = args.ingredients
-    else:
-        ingredients = ["milk", "eggs", "paneer", "tomatoes"]
-    
-    print(f"\nIngredients: {ingredients}")
-    
-    # Platforms to use (ONLY instacart and ubereats supported)
-    platforms = ["instacart", "ubereats"]
-    print(f"Platforms: {platforms}\n")
-    
-    # Create orchestrator
-    orchestrator = Orchestrator(ingredients)
-    
+    while True:
+        answer = input(f"{prompt} (y/n): ").strip().lower()
+        if answer in ("y", "yes"):
+            return True
+        if answer in ("n", "no"):
+            return False
+        print("Please answer with 'y' or 'n'.")
+
+
+def run_agent_by_file(script_path: Path, name: str) -> None:
+    """
+    Run an agent Python script as a separate process.
+    """
+    print(f"\n[RUNNING] {name} agent ...")
     try:
-        # STEP 2: Search & Order (parallel across platforms)
-        print("\n[STEP 1] SEARCHING AND ADDING TO CARTS...")
-        cart_state = await orchestrator.run_search_and_order_all_platforms(platforms)
-        
-        # STEP 3: Extract detailed cart info
-        print("\n[STEP 2] EXTRACTING CART DETAILS...")
-        cart_state = await orchestrator.extract_cart_details_all_platforms(platforms)
-    
-        # Display initial cart state
-        print("\n" + "=" * 70)
-        print("INITIAL CART STATE")
-        print("=" * 70)
-        for platform_name, cart in cart_state.platform_carts.items():
-            print(f"\n{platform_name.upper()}:")
-            print(f"  Items: {len(cart.items)}")
-            print(f"  Total: ${cart.total:.2f}")
-            for item in cart.items:
-                print(f"    - {item.product_name}: ${item.price:.2f} x {item.quantity}")
-        
-        # STEP 4: Simulate user edits (in real app, this comes from UI)
-        print("\n[STEP 3] SIMULATING USER EDITS...")
-        # Example: User removes "milk" from ubereats
-        if cart_state.get_cart("ubereats"):
-            milk_item = next((item for item in cart_state.get_cart("ubereats").items if "milk" in item.product_name.lower()), None)
-            if milk_item:
-                cart_state.record_diff("ubereats", "remove", milk_item)
-                print(f"  [EDIT] Recorded: Remove '{milk_item.product_name}' from UberEats")
-        
-        # STEP 5: Apply diffs (if any)
-        if cart_state.diffs:
-            print("\n[STEP 4] APPLYING CART EDITS...")
-            cart_state = await orchestrator.apply_diffs_all_platforms()
-            
-            # Re-extract cart details after edits
-            print("\n[STEP 5] RE-EXTRACTING CART DETAILS AFTER EDITS...")
-            cart_state = await orchestrator.extract_cart_details_all_platforms(platforms)
-        
-        # Display final cart state
-        print("\n" + "=" * 70)
-        print("FINAL CART STATE (BEFORE PAYMENT)")
-        print("=" * 70)
-        total_across_all = 0.0
-        for platform_name, cart in cart_state.platform_carts.items():
-            print(f"\n{platform_name.upper()}:")
-            print(f"  Items: {len(cart.items)}")
-            print(f"  Total: ${cart.total:.2f}")
-            total_across_all += cart.total
-            for item in cart.items:
-                print(f"    - {item.product_name}: ${item.price:.2f} x {item.quantity}")
-        
-        print(f"\n{'=' * 70}")
-        print(f"TOTAL ACROSS ALL PLATFORMS: ${total_across_all:.2f}")
-        print("=" * 70)
-        
-        # STEP 6: Mock payment with Knot API demonstration
-        print("\n[STEP 6] MOCK PAYMENT & KNOT API DEMONSTRATION...")
-        knot_client = get_knot_client()
-        
-        print("\nFetching sample transaction data from Knot API...")
-        for platform_name in platforms:
-            merchant_id = MERCHANT_IDS.get(platform_name)
-            if merchant_id:
-                print(f"\n{platform_name.upper()} Transaction Sample:")
-                txn_data = knot_client.sync_transactions(
-                    merchant_id=merchant_id,
-                    external_user_id="demo_user",
-                    limit=1
-                )
-                
-                if txn_data.get("transactions"):
-                    txn = txn_data["transactions"][0]
-                    print(f"  Transaction ID: {txn.get('id')}")
-                    
-                    # Calculate amount if not provided by API
-                    amount = txn.get('amount')
-                    if amount is None:
-                        # Calculate from items
-                        amount = sum(
-                            item.get('price', 0) * item.get('quantity', 1) 
-                            for item in txn.get('items', [])
-                        )
-                    
-                    print(f"  Amount: ${amount:.2f}")
-                    print(f"  SKU Items: {len(txn.get('items', []))}")
-                    for item in txn.get("items", []):
-                        print(f"    - {item.get('name')} (SKU: {item.get('sku')})")
-        
-        print("\n" + "=" * 70)
-        print("[SUCCESS] WORKFLOW COMPLETE")
-        print("=" * 70)
-        print("\nCart state saved to: data/cart_state.json")
-    
-    except Exception as e:
-        logger.error(f"Workflow error: {e}")
-        print(f"\n[ERROR] Workflow failed: {e}")
-        raise
-    
-    finally:
-        # Cleanup: All agents handle their own session cleanup internally
-        logger.info("Workflow cleanup completed")
+        result = subprocess.run([sys.executable, str(script_path)], check=True)
+        print(f"[DONE] {name} agent exited with code {result.returncode}")
+    except subprocess.CalledProcessError as e:
+        print(f"[ERROR] {name} agent failed with code {e.returncode}")
+
+
+def main() -> None:
+    base_dir = Path(__file__).parent
+
+    # Map platform names to their script paths
+    scripts = {
+        "instacart": base_dir / "agents" / "search_and_add_agents" / "instacart.py",
+        "ubereats": base_dir / "agents" / "search_and_add_agents" / "ubereats.py",
+    }
+
+    print("\n=== Platform Selection ===")
+    enable_instacart = ask_yes_no("Enable Instacart?")
+    enable_ubereats = ask_yes_no("Enable UberEats?")
+
+    selected_platforms = []
+    if enable_instacart:
+        selected_platforms.append("instacart")
+    if enable_ubereats:
+        selected_platforms.append("ubereats")
+
+    if not selected_platforms:
+        print("No platforms selected. Exiting.")
+        return
+
+    # Validate and run selected platforms sequentially
+    for platform in selected_platforms:
+        script_path = scripts.get(platform)
+        if not script_path or not script_path.exists():
+            print(f"[ERROR] Script not found for {platform}: {script_path}")
+            continue
+        run_agent_by_file(script_path, platform)
+
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
+
 

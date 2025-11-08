@@ -1,2 +1,3 @@
 playwright
 # playwright install 
+browser-use

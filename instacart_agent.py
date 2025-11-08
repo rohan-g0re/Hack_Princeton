@@ -1,36 +1,62 @@
 import asyncio
+from urllib.parse import quote_plus
 from playwright.async_api import async_playwright, TimeoutError as PwTimeout
 
-INGREDIENT = "milk"   # change me
+INGREDIENT = "milk"  # change as needed
 
-DUCK_URL = "https://duckduckgo.com/?q=site%3Ainstacart.com+{}&ia=web"
+DUCK_URL = "https://duckduckgo.com/?q={}"
 INSTA_SEARCH_URL = "https://www.instacart.com/store/search?q={}"
 
+QUERY_INSTACART_SUFFIX = True  # always search "<ingredient> instacart"
+
 async def first_href_containing(page, substring: str) -> str | None:
-    """Return the first anchor href on the page that contains substring."""
     hrefs = await page.eval_on_selector_all("a[href]", "els => els.map(e => e.href)")
     for h in hrefs:
         if substring in h:
             return h
     return None
 
-async def add_first_item_to_cart(page):
-    """
-    Tries several reasonable selectors for an 'Add' button
-    and clicks the first one found.
-    """
-    # common “Add” button patterns
+async def add_first_item_to_cart(page) -> bool:
+    """Try several patterns that Instacart uses for the Add button."""
     selector_candidates = [
+        # text-based
         "button:has-text('Add')",
         "button:has-text('ADD')",
-        "[data-test*='add']:not([disabled])",
-        "[data-testid*='add']:not([disabled])",
+        # aria / test ids
         "button[aria-label*='Add']",
+        "[data-testid*='Add']",
+        "[data-testid*='add']",
+        "[data-test*='add']",
+        # sometimes plus icon wrapped in a button/div with role
+        "[role='button'][aria-label*='Add']",
     ]
-    for sel in selector_candidates:
-        btn = page.locator(sel).first
+    # ensure product cards are visible before hunting buttons
+    card_hints = [
+        "[data-testid*='item-card']",
+        "[data-test*='item-card']",
+        "[class*='ItemCard']",
+        "[class*='Product']",
+        "button:has-text('Add')",
+    ]
+    for hint in card_hints:
         try:
-            await btn.wait_for(state="visible", timeout=4000)
+            await page.locator(hint).first.wait_for(state="visible", timeout=5000)
+            break
+        except PwTimeout:
+            continue
+
+    # small progressive scroll to bring early items into view
+    for _ in range(4):
+        try:
+            await page.mouse.wheel(0, 350)
+            await page.wait_for_timeout(400)
+        except Exception:
+            pass
+
+    for sel in selector_candidates:
+        try:
+            btn = page.locator(sel).first
+            await btn.wait_for(state="visible", timeout=2500)
             await btn.click()
             return True
         except PwTimeout:
@@ -41,32 +67,29 @@ async def add_first_item_to_cart(page):
 
 async def run():
     async with async_playwright() as p:
-        # Use persistent context so your Instacart login is remembered
         ctx = await p.chromium.launch_persistent_context(
-            user_data_dir="./user_data",   # keep cookies/sessions here
+            user_data_dir="./user_data",  # keeps you logged in
             headless=False,
-            args=["--disable-blink-features=AutomationControlled"],  # a tiny bit less “automated”
+            args=["--disable-blink-features=AutomationControlled"],
         )
         page = await ctx.new_page()
 
-        # ---------- Step 1: Try DuckDuckGo (avoid Google bot-check) ----------
+        # ---------- 1) Search engine step: "<ingredient> instacart" ----------
+        query = INGREDIENT + (" instacart" if QUERY_INSTACART_SUFFIX else "")
+        duck_url = DUCK_URL.format(quote_plus(query))
         try:
-            await page.goto(DUCK_URL.format(INGREDIENT), wait_until="domcontentloaded")
-            # pick first instacart link from results
+            await page.goto(duck_url, wait_until="domcontentloaded")
             href = await first_href_containing(page, "instacart.com")
-            if href:
-                await page.goto(href, wait_until="domcontentloaded")
-            else:
+            if not href:
                 # fallback to direct instacart search
-                await page.goto(INSTA_SEARCH_URL.format(INGREDIENT), wait_until="domcontentloaded")
+                href = INSTA_SEARCH_URL.format(quote_plus(INGREDIENT))
+            await page.goto(href, wait_until="domcontentloaded")
         except Exception:
-            # fallback if even DDG failed
-            await page.goto(INSTA_SEARCH_URL.format(INGREDIENT), wait_until="domcontentloaded")
+            # hard fallback
+            await page.goto(INSTA_SEARCH_URL.format(quote_plus(INGREDIENT)), wait_until="domcontentloaded")
 
-        # ---------- Step 2: If we’re not on a search page, search on Instacart ----------
-        # Try to fill any visible search box; otherwise we assume we’re already on /store/search?q=...
+        # ---------- 2) If not already on a search results page, search on Instacart ----------
         try:
-            # Try common search inputs
             search_selectors = [
                 "input[placeholder*='Search']",
                 "input[type='search']",
@@ -74,7 +97,7 @@ async def run():
                 "input[name='search']",
                 "input[name='searchTerm']",
             ]
-            found = False
+            filled = False
             for sel in search_selectors:
                 loc = page.locator(sel).first
                 try:
@@ -82,36 +105,27 @@ async def run():
                     await loc.click()
                     await loc.fill(INGREDIENT)
                     await page.keyboard.press("Enter")
-                    found = True
+                    filled = True
                     break
                 except PwTimeout:
                     continue
                 except Exception:
                     continue
-
-            if found:
-                # allow results to load
+            # give results time to render
+            if filled:
                 await page.wait_for_load_state("domcontentloaded")
-                # give time for product grid hydration
-                await page.wait_for_timeout(3000)
-        except Exception:
-            pass  # it’s fine—maybe we’re already on a search results page
-
-        # ---------- Step 3: Add the first item ----------
-        # scroll a bit to ensure first card’s buttons are in view
-        try:
-            await page.mouse.wheel(0, 400)
+                await page.wait_for_timeout(2500)
         except Exception:
             pass
 
+        # ---------- 3) Try to add the first item ----------
         added = await add_first_item_to_cart(page)
         if added:
             print(f"✅ Added '{INGREDIENT}' to cart.")
         else:
-            print("❌ Could not find an 'Add' button. You may need to log in or set your store/address first.")
+            print("❌ Could not find an 'Add' button. Ensure you're logged in, address/store is set, and items are available.")
 
-        # brief pause so you can see the result before the window closes
-        await page.wait_for_timeout(2500)
+        await page.wait_for_timeout(2000)
         await ctx.close()
 
 if __name__ == "__main__":

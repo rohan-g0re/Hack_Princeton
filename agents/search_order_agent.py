@@ -53,9 +53,9 @@ class SearchOrderAgent:
         """Initialize browser context"""
         self.playwright, self.context, self.page = await AgentUtils.create_browser_context(self.platform_name)
         
-        # Verify session valid
-        if not await AgentUtils.check_session_valid(self.page, self.platform_name):
-            raise ValueError(f"Not logged in to {self.platform_name}. Run SignIn agent first.")
+        # Don't check session here - it would navigate to cart page
+        # The persistent context already has the session
+        # If not logged in, BrowserUse will fail naturally when trying to add items
     
     async def cleanup(self):
         """Cleanup browser resources"""

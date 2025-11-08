@@ -53,8 +53,8 @@ class EditCartAgent:
         """Initialize browser context"""
         self.playwright, self.context, self.page = await AgentUtils.create_browser_context(self.platform_name)
         
-        if not await AgentUtils.check_session_valid(self.page, self.platform_name):
-            raise ValueError(f"Not logged in to {self.platform_name}")
+        # Don't check session - would navigate to cart page prematurely
+        # Persistent context already has the session
     
     async def cleanup(self):
         """Cleanup browser resources"""

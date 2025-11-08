@@ -2,11 +2,11 @@
 
 import asyncio
 import logging
-from orchestrator import ParallelOrchestrator
 from models.cart_models import CartState
 from knot_api.client import get_knot_client
 from knot_api.config import MERCHANT_IDS
 import sys
+import argparse
 
 # Setup logging
 logging.basicConfig(
@@ -30,16 +30,37 @@ async def main():
     7. Mock payment with Knot API transaction demonstration
     """
     
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description='Grocery Delivery Super App')
+    parser.add_argument('-1', '--browseruse', action='store_true', 
+                       help='Use BrowserUse agents (AI-powered, requires Gemini)')
+    parser.add_argument('-2', '--playwright', action='store_true',
+                       help='Use Playwright agents (pure DOM selectors, no LLM)')
+    parser.add_argument('ingredients', nargs='*', 
+                       help='Ingredients to order (e.g., milk eggs bread)')
+    
+    args = parser.parse_args()
+    
+    # Determine agent type
+    if args.playwright or (not args.browseruse and not args.playwright):
+        # Default to Playwright if nothing specified, or if -2 specified
+        agent_type = "playwright"
+        from orchestrator_playwright import ParallelOrchestratorPlaywright as Orchestrator
+    elif args.browseruse:
+        agent_type = "browseruse"
+        from orchestrator import ParallelOrchestrator as Orchestrator
+    else:
+        agent_type = "playwright"
+        from orchestrator_playwright import ParallelOrchestratorPlaywright as Orchestrator
+    
     print("\n" + "=" * 70)
     print("GROCERY DELIVERY SUPER APP - MVP")
+    print(f"Agent Type: {agent_type.upper()}")
     print("=" * 70)
     
     # STEP 1: Get ingredients
-    # In real app, this comes from Gemini API after user enters recipe
-    # For MVP, hardcode or take from command line
-    
-    if len(sys.argv) > 1:
-        ingredients = sys.argv[1:]
+    if args.ingredients:
+        ingredients = args.ingredients
     else:
         ingredients = ["milk", "eggs", "paneer", "tomatoes"]
     
@@ -49,8 +70,8 @@ async def main():
     platforms = ["instacart", "ubereats", "doordash"]
     print(f"Platforms: {platforms}\n")
     
-    # Create orchestrator
-    orchestrator = ParallelOrchestrator(ingredients)
+    # Create orchestrator (type determined by CLI args)
+    orchestrator = Orchestrator(ingredients)
     
     # STEP 2: Search & Order (parallel across platforms)
     print("\n[STEP 1] SEARCHING AND ADDING TO CARTS...")

@@ -1,0 +1,14 @@
+user_data/
+venv/
+.env
+.venv/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.idea/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.idea/
+python_cache/
+python_venv/

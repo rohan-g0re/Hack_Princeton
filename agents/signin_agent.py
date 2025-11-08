@@ -1,6 +1,6 @@
 # agents/signin_agent.py
 
-from agents.base_agent import AgentUtils
+from playwright.async_api import async_playwright
 from config.platforms import PLATFORM_CONFIGS
 from utils.popup_handler import dismiss_popups
 import logging
@@ -11,9 +11,10 @@ class SignInAgent:
     """
     Handles user authentication for delivery platforms
     
-    This agent opens a browser for the user to manually log in.
-    Once logged in, the session is persisted in the platform's
-    user_data_dir and reused by other agents.
+    Opens a persistent browser for the user to manually log in.
+    Session is saved in user_data_dir and reused by other agents.
+    
+    Based on proven instacart_agent.py pattern.
     """
     
     def __init__(self, platform_name: str):
@@ -24,55 +25,83 @@ class SignInAgent:
         """
         Execute sign-in flow
         
+        Opens browser and waits for user to log in manually.
+        Session persists in user_data_dir for future use.
+        
         Returns:
             True if sign-in successful, False otherwise
         """
-        logger.info(f"Starting sign-in for {self.platform_name}")
+        print(f"\n{'='*70}")
+        print(f"SIGN IN TO {self.platform_name.upper()}")
+        print("="*70)
+        print(f"\nOpening browser for {self.config['name']}...")
+        print("Please log in manually in the browser window.")
+        print("The session will be saved for future runs.")
+        print("\nPress ENTER after you've successfully logged in...")
+        print("="*70)
         
-        playwright, context, page = await AgentUtils.create_browser_context(self.platform_name)
-        
-        try:
-            # Check if already logged in
-            if await AgentUtils.check_session_valid(page, self.platform_name):
-                logger.info(f"Already logged in to {self.platform_name}")
-                return True
+        async with async_playwright() as p:
+            # Use persistent context - same pattern as instacart_agent.py
+            ctx = await p.chromium.launch_persistent_context(
+                user_data_dir=self.config["user_data_dir"],
+                headless=False,
+                args=["--disable-blink-features=AutomationControlled"],
+            )
             
-            # Navigate to login page
-            await page.goto(self.config["login_url"], wait_until="domcontentloaded")
-            await dismiss_popups(page)
+            page = await ctx.new_page()
             
-            logger.info(f"Waiting for user to log in to {self.platform_name}...")
-            logger.info("Please log in manually in the browser window.")
-            
-            # Wait for successful login (cart page accessible)
-            # Poll cart page until accessible (max 5 minutes)
-            for _ in range(60):  # 60 attempts * 5 seconds = 5 minutes
-                await page.wait_for_timeout(5000)
+            try:
+                # Navigate to login page
+                await page.goto(self.config["login_url"], wait_until="domcontentloaded")
+                await page.wait_for_timeout(1000)
+                await dismiss_popups(page)
                 
-                if await AgentUtils.check_session_valid(page, self.platform_name):
-                    logger.info(f"Successfully logged in to {self.platform_name}!")
-                    return True
-            
-            logger.error(f"Login timeout for {self.platform_name}")
-            return False
-            
-        except Exception as e:
-            logger.error(f"Sign-in failed for {self.platform_name}: {e}")
-            return False
-            
-        finally:
-            await AgentUtils.cleanup_browser(playwright, context)
+                # Wait for user confirmation
+                input()  # Wait for user to press ENTER
+                
+                # Verify login by checking cart page
+                print("\nVerifying login...")
+                await page.goto(self.config["cart_url"], wait_until="domcontentloaded", timeout=10000)
+                await page.wait_for_timeout(2000)
+                
+                # Check if we're still on login page (login failed)
+                current_url = page.url.lower()
+                if "login" in current_url or "signin" in current_url or "sign-in" in current_url:
+                    print(f"\n[FAILURE] Still on login page. Please try again.")
+                    await ctx.close()
+                    return False
+                
+                print(f"\n[SUCCESS] Successfully logged in to {self.config['name']}!")
+                print(f"Session saved to: {self.config['user_data_dir']}")
+                print("You can now run the main workflow.\n")
+                
+                await page.wait_for_timeout(1000)
+                await ctx.close()
+                return True
+                
+            except Exception as e:
+                print(f"\n[ERROR] Sign-in failed: {e}")
+                await ctx.close()
+                return False
 
-# CLI entry point for testing
+# CLI entry point
 async def main():
     import sys
-    import asyncio
-    platform = sys.argv[1] if len(sys.argv) > 1 else "instacart"
+    
+    if len(sys.argv) < 2:
+        print("Usage: python -m agents.signin_agent <platform>")
+        print("Platforms: instacart, ubereats, doordash")
+        return
+    
+    platform = sys.argv[1]
+    
+    if platform not in PLATFORM_CONFIGS:
+        print(f"Unknown platform: {platform}")
+        print(f"Available: {', '.join(PLATFORM_CONFIGS.keys())}")
+        return
     
     agent = SignInAgent(platform)
-    success = await agent.run()
-    
-    print(f"\n{'[SUCCESS]' if success else '[FAILURE]'}: {platform}")
+    await agent.run()
 
 if __name__ == "__main__":
     import asyncio

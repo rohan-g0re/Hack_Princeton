@@ -9,7 +9,7 @@
       "service_fee": 0.0,
       "tax": 0.0,
       "total": 0.0,
-      "timestamp": "2025-11-08T12:36:08.142221",
+      "timestamp": "2025-11-08T12:41:26.552612",
       "session_valid": true
     },
     "ubereats": {
@@ -21,7 +21,7 @@
       "service_fee": 0.0,
       "tax": 0.0,
       "total": 0.0,
-      "timestamp": "2025-11-08T12:36:09.049570",
+      "timestamp": "2025-11-08T12:41:26.688765",
       "session_valid": true
     },
     "doordash": {
@@ -33,16 +33,13 @@
       "service_fee": 0.0,
       "tax": 0.0,
       "total": 0.0,
-      "timestamp": "2025-11-08T12:36:09.616808",
+      "timestamp": "2025-11-08T12:41:29.338275",
       "session_valid": true
     }
   },
   "diffs": [],
   "ingredients_requested": [
-    "milk",
-    "eggs",
-    "paneer",
-    "tomatoes"
+    "milk"
   ],
-  "saved_at": "2025-11-08T12:36:10.508448"
+  "saved_at": "2025-11-08T12:41:29.796353"
 }

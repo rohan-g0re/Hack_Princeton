@@ -1,4 +1,13 @@
-2025/11/08-12:36:02.160 352c Reusing MANIFEST D:\STUFF\Projects\HackPton_Delivery_App\user_data_doordash\Default\IndexedDB\https_www.doordash.com_0.indexeddb.leveldb/MANIFEST-000001
-2025/11/08-12:36:02.162 352c Recovering log #4
-2025/11/08-12:36:02.190 352c Reusing old log D:\STUFF\Projects\HackPton_Delivery_App\user_data_doordash\Default\IndexedDB\https_www.doordash.com_0.indexeddb.leveldb/000004.log 
-2025/11/08-12:36:02.394 4d0 Manual compaction at level-0 from '\x00\x04\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x05\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/11/08-12:41:25.724 83d0 Reusing MANIFEST D:\STUFF\Projects\HackPton_Delivery_App\user_data_doordash\Default\IndexedDB\https_www.doordash.com_0.indexeddb.leveldb/MANIFEST-000001
+2025/11/08-12:41:25.726 83d0 Recovering log #7
+2025/11/08-12:41:25.734 83d0 Reusing old log D:\STUFF\Projects\HackPton_Delivery_App\user_data_doordash\Default\IndexedDB\https_www.doordash.com_0.indexeddb.leveldb/000007.log 
+2025/11/08-12:41:25.998 83d0 Level-0 table #12: started
+2025/11/08-12:41:26.010 83d0 Level-0 table #12: 136066 bytes OK
+2025/11/08-12:41:26.014 83d0 Delete type=0 #7
+2025/11/08-12:41:26.034 83d0 Manual compaction at level-0 from '\x00\x07\x00\x00\x00' @ 72057594037927935 : 1 .. '\x00\x08\x00\x00\x00' @ 0 : 0; will stop at (end)
+2025/11/08-12:41:26.236 31f4 Compacting 1@1 + 1@2 files
+2025/11/08-12:41:26.299 31f4 Generated table #13@1: 664 keys, 72221 bytes
+2025/11/08-12:41:26.299 31f4 Compacted 1@1 + 1@2 files => 72221 bytes
+2025/11/08-12:41:26.301 31f4 compacted to: files[ 0 0 1 0 0 0 0 ]
+2025/11/08-12:41:26.302 31f4 Delete type=2 #9
+2025/11/08-12:41:26.302 31f4 Delete type=2 #12

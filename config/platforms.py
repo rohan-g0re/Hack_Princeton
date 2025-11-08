@@ -4,7 +4,7 @@ PLATFORM_CONFIGS = {
     "instacart": {
         "name": "Instacart",
         "merchant_id": 40,  # Knot API merchant ID
-        "search_url": "https://www.instacart.com/store/search?q={}",
+        "search_url": "https://www.instacart.com/store/s?k={}",  # Correct: uses k= not q=
         "cart_url": "https://www.instacart.com/store/cart",
         "login_url": "https://www.instacart.com/login",
         "user_data_dir": "./user_data_instacart",

@@ -1,75 +1,44 @@
 # Usage Guide - Grocery Delivery SuperApp
 
-## Agent Types
+## Agent Type
 
-The app supports **two types of agents**:
+The app uses **Amazon Nova Auto agents**:
 
-### 1. **Playwright Agents** (Default, Recommended) `-2`
-- Pure DOM selectors based on proven `instacart_agent.py` pattern
-- **No LLM required** - works immediately
-- Faster and more reliable
-- Uses heuristics and explicit selectors
-
-### 2. **BrowserUse Agents** (AI-Powered) `-1`
-- Uses Gemini AI + BrowserUse for intelligent automation
-- Requires `GEMINI_API_KEY` in `.env`
-- More flexible, adapts to UI changes
-- **Currently has compatibility issues** - use Playwright for now
+### Amazon Nova Auto (Natural Language)
+- Uses Amazon Nova Auto with natural language instructions
+- Requires `GEMINI_API_KEY` for weight estimation
+- Requires `NOVA_ACT_API_KEY` for Nova Auto
+- Simplest implementation - just describe what to do
+- Batches items (5 per batch) for better reliability
+- Based on proven `instacart_nova_auto.py` and `uber_nova_auto.py`
+- Runs in background threads to avoid asyncio conflicts
 
 ---
 
 ## Command Line Options
 
-### Basic Usage (Playwright - Default)
+### Basic Usage
 
 ```bash
-# Uses Playwright agents by default
+# Add items to cart across all platforms
 python main.py milk eggs bread
 
-# Explicit Playwright flag
-python main.py -2 milk eggs bread
-python main.py --playwright milk eggs bread
-```
-
-### BrowserUse (AI-Powered)
-
-```bash
-# Use BrowserUse agents with Gemini AI
-python main.py -1 milk eggs bread
-python main.py --browseruse milk eggs bread
-```
-
-### No Ingredients (Uses Defaults)
-
-```bash
-# Uses: milk, eggs, paneer, tomatoes
-python main.py
-python main.py -2
+# Uses default ingredients if none provided
+python main.py  # Uses: milk, eggs, paneer, tomatoes
 ```
 
 ---
 
 ## Full Workflow Example
 
-### Step 1: Sign In to Platforms (One-time)
+### Run the App
 
 ```bash
-python -m agents.signin_agent instacart
-python -m agents.signin_agent ubereats
-python -m agents.signin_agent doordash
+# Nova Auto agents (natural language)
+python main.py milk eggs paneer
 ```
 
-Follow the prompts to log in manually. Sessions persist in `user_data_*` directories.
-
-### Step 2: Run the App
-
-```bash
-# Playwright agents (recommended)
-python main.py -2 milk eggs paneer
-
-# BrowserUse agents (if Gemini API working)
-python main.py -1 milk eggs paneer
-```
+Note: Nova Auto will handle authentication and session management automatically.
 
 ---
 
@@ -86,30 +55,36 @@ python main.py -1 milk eggs paneer
 
 ## Troubleshooting
 
-### "Not logged in" Errors
-Run signin agents again:
+### Nova Act Errors
+Check environment variables are set:
 ```bash
-python -m agents.signin_agent <platform>
-```
-
-### BrowserUse Not Working
-Use Playwright instead:
-```bash
-python main.py -2 milk eggs
-```
-
-### Browsers Not Opening
-Check if Playwright is installed:
-```bash
-playwright install chromium
+# In .env file
+GEMINI_API_KEY=your_gemini_key
+NOVA_ACT_API_KEY=your_nova_key
 ```
 
 ---
 
 ## Files
 
-- **Playwright Agents**: `agents/*_playwright.py`
-- **BrowserUse Agents**: `agents/search_order_agent.py`, `agents/edit_cart_agent.py`
-- **Orchestrators**: `orchestrator_playwright.py`, `orchestrator.py`
-- **Main**: `main.py` (handles CLI args)
+- **Nova Auto Agents**: `agents/search_order_agent_nova.py`
+- **Orchestrator**: `orchestrator_nova.py`
+- **Main**: `main.py`
+- **Tests**: `tests/nova_sync_smoke_instacart.py`, `tests/nova_async_wrapper_smoke.py`
+
+## Testing
+
+### Sync Smoke Test
+Tests basic NovaAct functionality on Instacart:
+```bash
+python tests/nova_sync_smoke_instacart.py
+```
+
+### Async Wrapper Smoke Test
+Tests the threading wrapper with any platform:
+```bash
+python tests/nova_async_wrapper_smoke.py -p instacart milk
+python tests/nova_async_wrapper_smoke.py -p ubereats milk eggs
+python tests/nova_async_wrapper_smoke.py -p doordash bread
+```
 

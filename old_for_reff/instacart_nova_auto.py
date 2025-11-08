@@ -1,132 +1,3 @@
-# import json
-# import re
-# from nova_act import NovaAct
-# import os
-
-# # Browser args enables browser debugging on port 9222.
-# os.environ["NOVA_ACT_BROWSER_ARGS"] = "--remote-debugging-port=9222"
-
-# def load_shopping_list(path="shopping_list.json"):
-#     with open(path, "r") as f:
-#         return json.load(f)["shopping_list"]
-
-# # remove descriptors that don't help store search
-# DESCRIPTORS = {
-#     "medium", "large", "small", "melted", "ripe", "unsalted"
-# }
-
-# def normalize_item_name(name: str) -> str:
-#     # if there are alternatives like "unsalted butter or vegetable oil" → pick the first option
-#     if " or " in name.lower():
-#         name = re.split(r"\s+or\s+", name, flags=re.IGNORECASE)[0]
-
-#     # drop common descriptors at word boundaries
-#     words = []
-#     for w in re.split(r"\s+", name.strip()):
-#         w_clean = re.sub(r"[^\w\-]", "", w).lower()
-#         if w_clean not in DESCRIPTORS:
-#             words.append(w)
-#     cleaned = " ".join(words).strip()
-
-#     # some slight tweaks: "Medium ripe bananas" → "bananas"
-#     cleaned = re.sub(r"\brip[e]?\b", "", cleaned, flags=re.IGNORECASE).strip()
-#     cleaned = re.sub(r"\s{2,}", " ", cleaned)
-#     return cleaned
-
-# def is_count_quantity(q):
-#     # countable if a plain int/float, or a numeric string with no unit words
-#     if isinstance(q, (int, float)):
-#         return True
-#     if isinstance(q, str):
-#         # if string has any letters, assume it's unit-based (cups, tbsp, tsp, etc.)
-#         if re.search(r"[A-Za-z]", q):
-#             return False
-#         # numeric-only string -> treat as count
-#         return bool(re.fullmatch(r"\d+(\.\d+)?", q.strip()))
-#     return False
-
-# def build_instruction_for_items(items_subset, is_first_batch=True):
-#     """Build instruction string for a subset of items"""
-#     instruction = ""
-    
-#     if is_first_batch:
-#         instruction += (
-#             "If a sign-up popup appears, close it. "
-#             "If a CAPTCHA appears, complete the verification. "
-#             "If any popup appears, close it. "
-#             "Search for 'Stop & shop' and click on the store. "
-#             "If any popup appears, close it. "
-#         )
-#     else:
-#         # For subsequent batches, just handle popups and navigate to store
-#         instruction += (
-#             "If any popup appears, close it. "
-#             "Go to the store page if not already there. "
-#         )
-    
-#     for entry in items_subset:
-#         raw_item = entry.get("item", "").strip()
-#         qty = entry.get("quantity", 1)
-#         item = normalize_item_name(raw_item)
-
-#         if is_count_quantity(qty):
-#             qty_int = int(float(qty))
-#             instruction += (
-#                 f"Search for '{item}' and add {qty_int} to cart. "
-#             )
-#         else:
-#             instruction += (
-#                 f"Search for '{item}'. "
-#                 f"In product list, prefer the smallest-size pack/container available. "
-#                 f"Add 1 to cart. "
-#             )
-    
-#     instruction += "Return the total items in cart."
-#     return instruction
-
-# # Configuration
-# ITEMS_PER_BATCH = 7
-# shopping_list = load_shopping_list()
-
-# # Process items in batches
-# total_items = len(shopping_list)
-# num_batches = (total_items + ITEMS_PER_BATCH - 1) // ITEMS_PER_BATCH  # ceiling division
-
-# print(f"Processing {total_items} items in {num_batches} batches...")
-
-# for batch_idx in range(num_batches):
-#     start_idx = batch_idx * ITEMS_PER_BATCH
-#     end_idx = min(start_idx + ITEMS_PER_BATCH, total_items)
-#     batch_items = shopping_list[start_idx:end_idx]
-    
-#     print(f"\n{'='*50}")
-#     print(f"Batch {batch_idx + 1}/{num_batches}: Processing items {start_idx + 1}-{end_idx}")
-#     print(f"{'='*50}")
-    
-#     # Build instruction for this batch
-#     is_first = (batch_idx == 0)
-#     instruction = build_instruction_for_items(batch_items, is_first_batch=is_first)
-    
-#     # Create new NovaAct instance for each batch
-#     nova = NovaAct(starting_page="https://www.instacart.com")
-#     nova.start()
-    
-#     try:
-#         result = nova.act(instruction, max_steps=99)
-#         print(f"Batch {batch_idx + 1} completed. Result: {result}")
-#     except Exception as e:
-#         print(f"Error in batch {batch_idx + 1}: {e}")
-#     finally:
-#         # Clean up the session
-#         nova.stop()  # assuming there's a stop/close method
-    
-#     print(f"Batch {batch_idx + 1} session closed.\n")
-
-# print("\n" + "="*50)
-# print("All batches completed!")
-# print("="*50)
-
-
 import json
 import re
 from nova_act import NovaAct
@@ -252,7 +123,6 @@ def build_instruction_for_items(items_subset, is_first_batch=True):
     if is_first_batch:
         instruction += (
             "If a sign-up popup appears, close it. "
-            "Put addess to deliver as 89 Northampton St, Boston, MA 02118. "
             "If a CAPTCHA appears, complete the verification. "
             "If any popup appears, close it. "
             "Search for 'Stop & shop' and click on the store. "
@@ -326,7 +196,7 @@ for batch_idx in range(num_batches):
     instruction = build_instruction_for_items(batch_items, is_first_batch=is_first)
     
     # Create new NovaAct instance for each batch
-    nova = NovaAct(starting_page="https://www.ubereats.com")
+    nova = NovaAct(starting_page="https://www.instacart.com")
     nova.start()
     
     try:

@@ -3,7 +3,7 @@ user_data_instacart/
 user_data_ubereats/
 user_data_doordash/
 
-
+__pycache__/
 
 .env
 .venv/

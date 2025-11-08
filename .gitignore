@@ -4,7 +4,9 @@ user_data_ubereats/
 user_data_doordash/
 
 __pycache__/
-
+_pycache_/
+__pycache__/
+__pycache__/
 .env
 .venv/
 .pytest_cache/

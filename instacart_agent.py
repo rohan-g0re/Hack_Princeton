@@ -1,13 +1,16 @@
 import asyncio
+import random
 from urllib.parse import quote_plus
 from playwright.async_api import async_playwright, TimeoutError as PwTimeout
 
-INGREDIENT = "milk"  # change as needed
+# >>> Edit your shopping list here
+INGREDIENTS = ["milk", "eggs", "bread"]  # add more
 
 DUCK_URL = "https://duckduckgo.com/?q={}"
 INSTA_SEARCH_URL = "https://www.instacart.com/store/search?q={}"
 
-QUERY_INSTACART_SUFFIX = True  # always search "<ingredient> instacart"
+def human_delay(min_ms=300, max_ms=800):
+    return random.randint(min_ms, max_ms)
 
 async def first_href_containing(page, substring: str) -> str | None:
     hrefs = await page.eval_on_selector_all("a[href]", "els => els.map(e => e.href)")
@@ -16,47 +19,86 @@ async def first_href_containing(page, substring: str) -> str | None:
             return h
     return None
 
-async def add_first_item_to_cart(page) -> bool:
-    """Try several patterns that Instacart uses for the Add button."""
-    selector_candidates = [
-        # text-based
-        "button:has-text('Add')",
-        "button:has-text('ADD')",
-        # aria / test ids
-        "button[aria-label*='Add']",
-        "[data-testid*='Add']",
-        "[data-testid*='add']",
-        "[data-test*='add']",
-        # sometimes plus icon wrapped in a button/div with role
-        "[role='button'][aria-label*='Add']",
+async def ensure_on_instacart_results(page, ingredient: str):
+    """
+    Try DuckDuckGo ('<ingredient> instacart'), then fallback to direct Instacart search.
+    Leaves you on an Instacart search results page for the ingredient.
+    """
+    query = f"{ingredient} instacart"
+    duck_url = DUCK_URL.format(quote_plus(query))
+    try:
+        await page.goto(duck_url, wait_until="domcontentloaded")
+        await page.wait_for_timeout(human_delay())
+        href = await first_href_containing(page, "instacart.com")
+        if not href:
+            href = INSTA_SEARCH_URL.format(quote_plus(ingredient))
+        await page.goto(href, wait_until="domcontentloaded")
+    except Exception:
+        # hard fallback
+        await page.goto(INSTA_SEARCH_URL.format(quote_plus(ingredient)), wait_until="domcontentloaded")
+
+    # If we didn’t land on a results page, try to type into the site search box
+    search_selectors = [
+        "input[placeholder*='Search']",
+        "input[type='search']",
+        "form[role='search'] input",
+        "input[name='search']",
+        "input[name='searchTerm']",
     ]
-    # ensure product cards are visible before hunting buttons
-    card_hints = [
+    for sel in search_selectors:
+        loc = page.locator(sel).first
+        try:
+            await loc.wait_for(state="visible", timeout=2000)
+            await loc.click()
+            await loc.fill(ingredient)
+            await page.keyboard.press("Enter")
+            break
+        except Exception:
+            continue
+
+    await page.wait_for_load_state("domcontentloaded")
+    await page.wait_for_timeout(1500)
+
+async def add_first_item_to_cart(page) -> bool:
+    """
+    Try several likely 'Add' selectors, with small scrolls.
+    """
+    # ensure product grid is present-ish
+    grid_hints = [
         "[data-testid*='item-card']",
         "[data-test*='item-card']",
         "[class*='ItemCard']",
         "[class*='Product']",
         "button:has-text('Add')",
     ]
-    for hint in card_hints:
+    for hint in grid_hints:
         try:
-            await page.locator(hint).first.wait_for(state="visible", timeout=5000)
+            await page.locator(hint).first.wait_for(state="visible", timeout=4000)
             break
         except PwTimeout:
             continue
 
-    # small progressive scroll to bring early items into view
-    for _ in range(4):
+    # progressive scroll to bring top items into view
+    for _ in range(5):
         try:
             await page.mouse.wheel(0, 350)
-            await page.wait_for_timeout(400)
+            await page.wait_for_timeout(250)
         except Exception:
             pass
 
-    for sel in selector_candidates:
+    candidates = [
+        "button:has-text('Add')",
+        "button:has-text('ADD')",
+        "button[aria-label*='Add']",
+        "[data-testid*='Add']",
+        "[data-testid*='add']",
+        "[data-test*='add']",
+        "[role='button'][aria-label*='Add']",
+    ]
+    for sel in candidates:
+        btn = page.locator(sel).first
         try:
-            btn = page.locator(sel).first
-            await btn.wait_for(state="visible", timeout=2500)
+            await btn.wait_for(state="visible", timeout=2000)
             await btn.click()
             return True
         except PwTimeout:
@@ -68,64 +110,32 @@ async def add_first_item_to_cart(page) -> bool:
 async def run():
     async with async_playwright() as p:
         ctx = await p.chromium.launch_persistent_context(
-            user_data_dir="./user_data",  # keeps you logged in
+            user_data_dir="./user_data",   # persists your Instacart login + store
             headless=False,
             args=["--disable-blink-features=AutomationControlled"],
         )
         page = await ctx.new_page()
 
-        # ---------- 1) Search engine step: "<ingredient> instacart" ----------
-        query = INGREDIENT + (" instacart" if QUERY_INSTACART_SUFFIX else "")
-        duck_url = DUCK_URL.format(quote_plus(query))
-        try:
-            await page.goto(duck_url, wait_until="domcontentloaded")
-            href = await first_href_containing(page, "instacart.com")
-            if not href:
-                # fallback to direct instacart search
-                href = INSTA_SEARCH_URL.format(quote_plus(INGREDIENT))
-            await page.goto(href, wait_until="domcontentloaded")
-        except Exception:
-            # hard fallback
-            await page.goto(INSTA_SEARCH_URL.format(quote_plus(INGREDIENT)), wait_until="domcontentloaded")
+        success = []
+        failed = []
 
-        # ---------- 2) If not already on a search results page, search on Instacart ----------
-        try:
-            search_selectors = [
-                "input[placeholder*='Search']",
-                "input[type='search']",
-                "form[role='search'] input",
-                "input[name='search']",
-                "input[name='searchTerm']",
-            ]
-            filled = False
-            for sel in search_selectors:
-                loc = page.locator(sel).first
-                try:
-                    await loc.wait_for(state="visible", timeout=2500)
-                    await loc.click()
-                    await loc.fill(INGREDIENT)
-                    await page.keyboard.press("Enter")
-                    filled = True
-                    break
-                except PwTimeout:
-                    continue
-                except Exception:
-                    continue
-            # give results time to render
-            if filled:
-                await page.wait_for_load_state("domcontentloaded")
-                await page.wait_for_timeout(2500)
-        except Exception:
-            pass
+        for item in INGREDIENTS:
+            print(f"\n—> Processing: {item}")
+            await ensure_on_instacart_results(page, item)
+            added = await add_first_item_to_cart(page)
+            if added:
+                print(f"✅ Added '{item}' to cart.")
+                success.append(item)
+            else:
+                print(f"❌ Could not add '{item}'. Check login/store or UI changed.")
+                failed.append(item)
+            await page.wait_for_timeout(human_delay(600, 1200))
 
-        # ---------- 3) Try to add the first item ----------
-        added = await add_first_item_to_cart(page)
-        if added:
-            print(f"✅ Added '{INGREDIENT}' to cart.")
-        else:
-            print("❌ Could not find an 'Add' button. Ensure you're logged in, address/store is set, and items are available.")
+        print("\nSummary:")
+        print("  Added :", success or "—")
+        print("  Failed:", failed or "—")
 
-        await page.wait_for_timeout(2000)
+        await page.wait_for_timeout(1500)
         await ctx.close()
 
 if __name__ == "__main__":

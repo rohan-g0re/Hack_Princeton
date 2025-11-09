@@ -6,3 +6,9 @@ python-dotenv==1.0.1
 google-generativeai==0.8.3
 requests==2.32.3
 
+# Phase 3 dependencies
+supabase==2.3.4
+pyjwt[crypto]==2.8.0
+cryptography==41.0.7
+pillow==10.2.0
+

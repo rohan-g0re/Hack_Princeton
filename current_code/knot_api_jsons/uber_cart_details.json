@@ -1,0 +1,50 @@
+{
+  "merchant": {
+    "id": 3091,
+    "name": "Uber Eats"
+  },
+  "transactions": [
+    {
+      "id": "e5d7f830-df23-4b7b-8be8-4fd470aa007b",
+      "external_id": "e5d7f830-df23-4b7b-8be8-4fd470aa007b",
+      "datetime": "2025-11-09T09:35:06.112034",
+      "url": "https://www.ubereats.com/order/e5d7f830-df23-4b7b-8be8-4fd470aa007b",
+      "order_status": "BILLED",
+      "payment_methods": [
+        {
+          "external_id": "26eb4e29-ff56-40d8-b27f-dd00cd893043",
+          "type": "PAYPAL",
+          "transaction_amount": "5.25"
+        }
+      ],
+      "price": {
+        "sub_total": "4.93",
+        "adjustments": [
+          {
+            "type": "TAX",
+            "label": "Sales Tax",
+            "amount": "0.32"
+          }
+        ],
+        "total": "5.25",
+        "currency": "USD"
+      },
+      "products": [
+        {
+          "external_id": "1200001",
+          "name": "Item 1: Good & Gather Romaine Hearts Lettuce (22 oz, 3 ct)",
+          "url": "",
+          "quantity": 1,
+          "price": {
+            "sub_total": "4.93",
+            "total": "4.93",
+            "unit_price": "4.93"
+          },
+          "eligibility": []
+        }
+      ]
+    }
+  ],
+  "next_cursor": "",
+  "limit": 1
+}

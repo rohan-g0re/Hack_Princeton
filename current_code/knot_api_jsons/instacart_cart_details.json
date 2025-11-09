@@ -1,0 +1,52 @@
+{
+  "merchant": {
+    "id": 519,
+    "name": "Instacart"
+  },
+  "transactions": [
+    {
+      "id": "c8c6911b-a19a-47ab-b02d-4842f5a0fead",
+      "external_id": "c8c6911b-a19a-47ab-b02d-4842f5a0fead",
+      "datetime": "2025-11-09T09:35:06.110640",
+      "url": "https://www.instacart.com/store/orders/c8c6911b-a19a-47ab-b02d-4842f5a0fead",
+      "order_status": "BILLED",
+      "payment_methods": [
+        {
+          "external_id": "550ee16d-bf3a-4aec-bff8-c9474e5aaa49",
+          "type": "CARD",
+          "brand": "DISCOVER",
+          "last_four": "3894",
+          "transaction_amount": "3.18"
+        }
+      ],
+      "price": {
+        "sub_total": "2.99",
+        "adjustments": [
+          {
+            "type": "TAX",
+            "label": "Sales Tax",
+            "amount": "0.19"
+          }
+        ],
+        "total": "3.18",
+        "currency": "USD"
+      },
+      "products": [
+        {
+          "external_id": "1200001",
+          "name": "Item 1: Queen Victoria Fresh Lettuce",
+          "url": "",
+          "quantity": 1,
+          "price": {
+            "sub_total": "2.99",
+            "total": "2.99",
+            "unit_price": "2.99"
+          },
+          "eligibility": []
+        }
+      ]
+    }
+  ],
+  "next_cursor": "",
+  "limit": 1
+}

@@ -11,11 +11,35 @@ from app.models.job import JobState, JobStatus
 
 
 class DriverJobRunner:
-    """Manages background execution of current_code/main.py"""
+    """Manages background execution of agent pipeline"""
     
     def __init__(self):
         self.jobs_dir = settings.jobs_dir
         self.jobs_dir.mkdir(parents=True, exist_ok=True)
+    
+    def create_job(self) -> str:
+        """
+        Create a new job without starting a subprocess.
+        Used for in-process agent execution.
+        Returns job_id.
+        """
+        job_id = str(uuid.uuid4())
+        job_dir = self.jobs_dir / job_id
+        job_dir.mkdir(parents=True, exist_ok=True)
+        
+        # State file
+        state_path = job_dir / "state.json"
+        
+        # Save initial state
+        state = JobState(
+            job_id=job_id,
+            status="pending",
+            pid=None,  # No subprocess
+            started_at=datetime.utcnow()
+        )
+        self._save_state(state_path, state)
+        
+        return job_id
     
     def start_job(self) -> str:
         """

@@ -1,64 +1,46 @@
 from fastapi import APIRouter, HTTPException, BackgroundTasks
 from app.models.job import DriverJobResponse, DriverStatusResponse
 from app.services.driver_runner import driver_runner
+from app.services.agent_orchestrator import agent_orchestrator
 from app.services.artifact_scanner import get_artifact_counts
 import psutil
 
 router = APIRouter(prefix="/run-driver", tags=["driver"])
 
 
-def monitor_job(job_id: str):
-    """Background task to monitor job completion"""
-    import time
-    from app.config import settings
-    
-    max_runtime = settings.max_job_runtime_seconds
-    poll_interval = settings.poll_interval_seconds
-    elapsed = 0
-    
-    while elapsed < max_runtime:
-        time.sleep(poll_interval)
-        elapsed += poll_interval
+def execute_agents_task(job_id: str):
+    """Background task to execute agents directly"""
+    try:
+        # Update status to running
+        driver_runner.update_status(job_id, "running")
         
-        state = driver_runner.get_status(job_id)
-        if not state:
-            break
+        # Execute the full pipeline (agents + knot generation)
+        platforms = ["instacart", "ubereats"]  # Could be made configurable
+        result = agent_orchestrator.execute_full_pipeline(platforms)
         
-        # Check if process still running
-        if state.pid:
-            try:
-                process = psutil.Process(state.pid)
-                if not process.is_running():
-                    # Process finished
-                    counts = get_artifact_counts()
-                    if counts["knot_api_count"] > 0:
-                        driver_runner.update_status(job_id, "success")
-                    else:
-                        driver_runner.update_status(job_id, "error", "No output files generated")
-                    break
-            except psutil.NoSuchProcess:
-                # Process ended
-                counts = get_artifact_counts()
-                if counts["knot_api_count"] > 0:
-                    driver_runner.update_status(job_id, "success")
-                else:
-                    driver_runner.update_status(job_id, "error", "Process ended without output")
-                break
-    
-    # Timeout
-    if elapsed >= max_runtime:
-        driver_runner.update_status(job_id, "error", "Job timed out")
+        if result.get("success"):
+            knot_count = result.get("knot_results", {}).get("generated_count", 0)
+            if knot_count > 0:
+                driver_runner.update_status(job_id, "success")
+            else:
+                driver_runner.update_status(job_id, "error", "No output files generated")
+        else:
+            error_msg = result.get("error", "Pipeline execution failed")
+            driver_runner.update_status(job_id, "error", error_msg)
+            
+    except Exception as e:
+        driver_runner.update_status(job_id, "error", str(e))
 
 
 @router.post("", response_model=DriverJobResponse)
 async def start_driver(background_tasks: BackgroundTasks):
     """
-    Start background execution of current_code/main.py
+    Start background execution of agent pipeline
     Returns job_id for tracking
     """
     try:
-        job_id = driver_runner.start_job()
-        background_tasks.add_task(monitor_job, job_id)
+        job_id = driver_runner.create_job()  # Create job without starting subprocess
+        background_tasks.add_task(execute_agents_task, job_id)
         return DriverJobResponse(job_id=job_id)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to start driver: {e}")

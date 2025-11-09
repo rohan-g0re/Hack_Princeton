@@ -7,17 +7,17 @@ from dotenv import load_dotenv
 # Load .env from project root
 load_dotenv()
 
-# 🔑 Set your Gemini key
+# Set your Gemini key
 API_KEY = os.getenv("GEMINI_API_KEY")
 if not API_KEY:
     raise ValueError("Please set your GEMINI_API_KEY environment variable.")
 
 genai.configure(api_key=API_KEY)
 
-# 🌐 Simple web search function using DuckDuckGo
+# Simple web search function using DuckDuckGo
 def search_recipe_online(recipe_name):
     """Fetch top search results for the recipe and extract brief info."""
-    print(f"🔍 Searching the web for '{recipe_name}' ingredients...")
+    print(f"Searching the web for '{recipe_name}' ingredients...")
     search_url = "https://api.duckduckgo.com/"
     params = {
         "q": f"{recipe_name} ingredients list recipe site:allrecipes.com OR site:bbcgoodfood.com OR site:foodnetwork.com",
@@ -32,7 +32,7 @@ def search_recipe_online(recipe_name):
     return "\n".join(snippets[:5])  # take a few snippets
 
 
-# 🧾 Use Gemini to structure into JSON
+# Use Gemini to structure into JSON
 def recipe_to_shopping_list(recipe_name):
     search_results = search_recipe_online(recipe_name)
 
@@ -62,12 +62,12 @@ Here are some online snippets to reference:
     try:
         return json.loads(json_str)
     except json.JSONDecodeError:
-        print("⚠️ Model did not return valid JSON, showing raw output:")
+        print("WARNING: Model did not return valid JSON, showing raw output:")
         print(text)
         return None
 
 
-# 🧾 Alternative: accept a comma-separated ingredient list and normalize
+# Alternative: accept a comma-separated ingredient list and normalize
 def ingredients_to_shopping_list(ingredients_csv: str):
     """
     Convert a comma-separated list of ingredients into a structured shopping list JSON.
@@ -110,22 +110,22 @@ Rules:
     try:
         return json.loads(json_str)
     except json.JSONDecodeError:
-        print("⚠️ Model did not return valid JSON, showing raw output:")
+        print("WARNING: Model did not return valid JSON, showing raw output:")
         print(text)
         return None
 
 
-# 💾 Save to file
+# Save to file
 def save_to_file(data, recipe_name):
     filename = f"shopping_list.json"
     with open(filename, "w") as f:
         json.dump(data, f, indent=2)
-    print(f"✅ Saved JSON to {filename}")
+    print(f"Saved JSON to {filename}")
 
 
-# 🚀 Run
+# Run
 if __name__ == "__main__":
-    user_input = input("🍳 Enter recipe name OR comma-separated ingredients: ").strip()
+    user_input = input("Enter recipe name OR comma-separated ingredients: ").strip()
     if "," in user_input:
         data = ingredients_to_shopping_list(user_input)
     else:

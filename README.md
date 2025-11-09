@@ -9,7 +9,6 @@ An intelligent grocery comparison platform that helps you find the **best prices
   
 </div>
 
----
 
 ## ✨ Features
 

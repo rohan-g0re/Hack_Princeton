@@ -3,7 +3,7 @@ import argparse
 import json
 import subprocess
 from pathlib import Path
-from knot_api.mock_response import summarize_cart
+from knot_api.mock_response import build_knot_like_from_cart
 
 
 def ask_yes_no(prompt: str) -> bool:
@@ -81,19 +81,19 @@ def main() -> None:
             continue
         run_agent_by_file(script_path, platform, base_dir)
 
-    # Step 3: Summarize all cart JSONs into knot_api_jsons using mock_response
+    # Step 3: Build Knot-style JSONs into knot_api_jsons using mock_response
     cart_dir = base_dir / "cart_jsons"
     out_dir = base_dir / "knot_api_jsons"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     if cart_dir.exists():
         for cart_file in cart_dir.glob("*.json"):
-            summary = summarize_cart(str(cart_file))
-            if not summary:
+            knot_obj = build_knot_like_from_cart(str(cart_file))
+            if not knot_obj:
                 continue
             out_path = out_dir / cart_file.name
             with open(out_path, "w", encoding="utf-8") as f:
-                json.dump(summary, f, ensure_ascii=False, indent=2)
+                json.dump(knot_obj, f, ensure_ascii=False, indent=2)
 
 
 if __name__ == "__main__":

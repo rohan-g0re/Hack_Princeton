@@ -11,6 +11,21 @@ class Settings(BaseSettings):
     
     # Gemini
     gemini_api_key: str = ""
+    gemini_model_text: str = "gemini-1.5-flash"
+    gemini_model_image: str = "gemini-1.5-pro"
+    
+    # Phase 3: Supabase
+    supabase_url: str = ""
+    supabase_service_role_key: str = ""
+    supabase_anon_key: str = ""
+    supabase_jwt_secret: str = ""
+    
+    # Storage
+    receipts_bucket: str = "receipts"
+    
+    # Background tasks
+    max_receipt_retries: int = 3
+    receipt_retry_delay_seconds: int = 5
     
     # Logging
     log_level: str = "info"

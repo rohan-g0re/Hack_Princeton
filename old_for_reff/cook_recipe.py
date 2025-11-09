@@ -2,6 +2,10 @@ import os
 import json
 import requests
 import google.generativeai as genai
+from dotenv import load_dotenv
+
+# Load .env from project root
+load_dotenv()
 
 # 🔑 Set your Gemini key
 API_KEY = os.environ.get("GEMINI_API_KEY")

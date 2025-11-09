@@ -1,0 +1,14 @@
+INSTACART CART DETAILS
+==================================================
+
+Item 1: Queen Victoria Fresh Lettuce | Qty: 1 | Price: $2.99 | Size: 1 each
+Item 2: Breyers Ice Cream Natural Vanilla | Qty: 1 | Price: $5.99 | Size: 48 oz
+Item 3: Good Humor Frozen Dairy Dessert Bars Strawberry | Qty: 1 | Price: $7.99 | Size: 18 fl oz
+Item 4: Tru Fru Nature's Strawberrries, Hyper-Chilled in White & | Qty: 1 | Price: $7.99 | Size: 8 oz
+Item 5: Land O Lakes 2% Milk White Deli American Cheese | Qty: 1 | Price: $8.99 | Size: 16.7 oz
+Item 6: Frito Lay Snacks Variety Packs Mix | Qty: 1 | Price: $11.99 | Size: 16.7 oz
+Total items: 6
+Subtotal: $42.85
+
+==================================================
+Extraction Date: Sat Nov  8 19:08:14 EST 2025

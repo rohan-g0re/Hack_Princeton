@@ -149,7 +149,7 @@ for entry in shopping_list:
             instruction += (
                 f"Search for '{item}'. "
                 f"You need approximately {target_weight}g (about {target_oz} oz). "
-                f"Find the package that contains at least this amount. "
+                f"SELECT THE FIRST ITEM FOUND."
                 f"Add ONLY 1 package to cart. "
                 f"Do not add multiple packages. "
             )

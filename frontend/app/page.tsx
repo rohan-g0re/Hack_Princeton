@@ -278,10 +278,10 @@ export default function Home() {
                               <div key={itemIdx} className="flex justify-between text-sm">
                                 <div className="flex-1">
                                   <div className="font-medium text-gray-800">{itemIdx + 1}. {item.name}</div>
-                                  <div className="text-xs text-gray-500">{item.quantity || '1'} {item.unit || ''}</div>
+                                  <div className="text-xs text-gray-500">{item.quantity || '1'}</div>
                                 </div>
                                 <div className="font-semibold text-gray-700 ml-2">
-                                  ${item.price?.toFixed(2) || '0.00'}
+                                  ${item.total_price?.toFixed(2) || '0.00'}
                                 </div>
                               </div>
                             ))}
@@ -291,7 +291,7 @@ export default function Home() {
                           <div className="border-t pt-3 mt-3">
                             <div className="flex justify-between font-bold text-lg mb-4">
                               <span>Total:</span>
-                              <span>${platform.total_price?.toFixed(2) || '0.00'}</span>
+                              <span>${platform.total?.toFixed(2) || '0.00'}</span>
                             </div>
                             
                             <button 
@@ -310,7 +310,7 @@ export default function Home() {
                   {platforms.length >= 2 && (
                     <div className="mt-6 text-center">
                       <p className="text-green-700 font-medium">
-                        You can save ${Math.abs(platforms[0].total_price - platforms[1].total_price).toFixed(2)} by choosing {platforms[0].total_price < platforms[1].total_price ? platforms[0].name : platforms[1].name}!
+                        You can save ${Math.abs(platforms[0].total - platforms[1].total).toFixed(2)} by choosing {platforms[0].total < platforms[1].total ? platforms[0].name : platforms[1].name}!
                       </p>
                     </div>
                   )}

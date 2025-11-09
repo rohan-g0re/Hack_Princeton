@@ -40,19 +40,36 @@ def parse_knot_api_jsons() -> List[PlatformSummary]:
             # Extract items
             products = tx.get("products", [])
             items = []
+            subtotal_calculated = 0.0
+            
             for prod in products:
+                price_data = prod.get("price", {})
+                unit_price_str = str(price_data.get("unit_price", "0")).replace("$", "").strip()
+                total_price_str = str(price_data.get("total", "0")).replace("$", "").strip()
+                
+                unit_price = float(unit_price_str) if unit_price_str else 0.0
+                total_price = float(total_price_str) if total_price_str else 0.0
+                
                 items.append(ItemSummary(
                     name=prod.get("name", "Unknown"),
                     quantity=prod.get("quantity", 1),
-                    unit_price=float(prod.get("price", {}).get("unit_price", "0").replace("$", "")),
-                    total_price=float(prod.get("price", {}).get("total", "0").replace("$", ""))
+                    unit_price=unit_price,
+                    total_price=total_price
                 ))
+                subtotal_calculated += total_price
             
-            # Extract price
+            # Extract tax from transaction price
             price = tx.get("price", {})
-            subtotal = float(price.get("sub_total", "0").replace("$", ""))
-            total = float(price.get("total", "0").replace("$", ""))
-            tax = total - subtotal
+            adjustments = price.get("adjustments", [])
+            tax = 0.0
+            for adj in adjustments:
+                if adj.get("type") == "TAX":
+                    tax_str = str(adj.get("amount", "0")).replace("$", "").strip()
+                    tax += float(tax_str) if tax_str else 0.0
+            
+            # Calculate total (sum of items + tax)
+            subtotal = subtotal_calculated
+            total = subtotal + tax
             
             # Date
             date_str = tx.get("datetime", "")[:10]  # ISO date

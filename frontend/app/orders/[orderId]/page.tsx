@@ -72,11 +72,11 @@ export default function OrderDetailPage() {
               {items.map((item, idx) => (
                 <div key={idx} className="flex justify-between text-sm">
                   <div className="flex-1">
-                    <div className="font-medium text-gray-800">{idx + 1}. {item.name}</div>
+                    <div className="font-medium text-gray-800">{idx + 1}. {item.item_name}</div>
                     <div className="text-xs text-gray-500">{item.quantity || '1'} {item.unit || ''}</div>
                   </div>
                   <div className="font-semibold text-gray-700">
-                    ${item.price?.toFixed(2) || '0.00'}
+                    ${item.total?.toFixed(2) || '0.00'}
                   </div>
                 </div>
               ))}

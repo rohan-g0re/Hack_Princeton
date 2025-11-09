@@ -1,12 +1,8 @@
 {
   "shopping_list": [
     {
-      "item": "Cucumber",
-      "quantity": 1.0
-    },
-    {
-      "item": "Garlic",
-      "quantity": 1.0
+      "item": "Parmesan cheese",
+      "quantity": 4.0
     }
   ]
 }

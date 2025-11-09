@@ -15,8 +15,8 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Recipe Cart Optimizer",
-  description: "Compare prices across delivery platforms",
+  title: "MealPilot: AutoCart - Compare ingredient costs to save time and money",
+  description: "Compare ingredient costs across Amazon, Instacart, and Uber Eats to save time and money on your grocery shopping.",
 };
 
 export default function RootLayout({

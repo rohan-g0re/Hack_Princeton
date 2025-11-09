@@ -3,6 +3,8 @@ user_data_instacart/
 user_data_ubereats/
 user_data_doordash/
 
+venv/
+py_venv/
 __pycache__/
 _pycache_/
 __pycache__/
@@ -19,3 +21,5 @@ __pycache__/
 .idea/
 python_cache/
 python_venv/
+
+runtime/

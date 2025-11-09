@@ -1,257 +1,348 @@
-# Grocery Delivery SuperApp MVP
+# 🛒 Grocery Super-App
 
-Multi-platform grocery ordering super app with parallel browser automation agents, cart management with diff tracking, and Knot API integration for transaction demonstration.
+A multi-platform grocery ordering application with React Native Expo frontend and FastAPI backend, using browser automation agents to manage carts across Instacart, UberEats, and more.
 
-## Features
+---
 
-- **Multi-Platform Support**: Instacart, Uber Eats, DoorDash
-- **Parallel Execution**: All platforms processed simultaneously using asyncio
-- **AI-Powered Automation**: Uses Gemini + BrowserUse for resilient browser automation
-- **Cart Diff Tracking**: Record and apply user edits before checkout
-- **Session Management**: Persistent browser contexts maintain login state
-- **Knot API Integration**: Transaction data demonstration with SKU-level details
-
-## Architecture
-
-### Components
-
-1. **Agents** (`agents/`)
-   - `SignInAgent`: Manual user authentication with session persistence
-   - `SearchOrderAgent`: AI-powered search and cart addition (Gemini + BrowserUse)
-   - `EditCartAgent`: Apply user cart modifications
-   - `CartDetailAgent`: Extract cart information
-
-2. **Orchestrator** (`orchestrator.py`)
-   - Parallel execution coordinator using `asyncio.gather()`
-   - Exception isolation per platform
-   - Cart state persistence
-
-3. **Data Models** (`models/`)
-   - `CartItem`, `PlatformCart`, `CartDiff`, `CartState`
-   - JSON serialization for persistence
-
-4. **Knot API** (`knot_api/`)
-   - Transaction sync with mock data fallback
-   - SKU-level product data
-
-5. **Main Entry** (`main.py`)
-   - CLI application
-   - 6-step workflow orchestration
-
-## Installation
-
-### Prerequisites
-
-- Python 3.11+
-- 8-16GB RAM (for parallel browser instances)
-- GEMINI_API_KEY in `.env` file
-
-### Setup
-
-```bash
-# Install dependencies
-pip install -r requirements.txt
-
-# Install Playwright browsers
-playwright install chromium
-
-# Verify installation
-python -c "import playwright; import browser_use; print('Ready!')"
-```
-
-### Environment Configuration
-
-Create `.env` file in project root:
-
-```
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-## Usage
-
-### Step 1: Sign In to Platforms
-
-Run SignIn agent for each platform (one-time setup):
-
-```bash
-python -m agents.signin_agent instacart
-python -m agents.signin_agent ubereats
-python -m agents.signin_agent doordash
-```
-
-A browser will open - manually log in. Session persists in `user_data_<platform>/` directories.
-
-### Step 2: Run Complete Workflow
-
-```bash
-# With default ingredients (milk, eggs, paneer, tomatoes)
-python main.py
-
-# With custom ingredients
-python main.py milk eggs bread cheese tomatoes
-```
-
-### Workflow Steps
-
-1. **Search & Order**: Agents search for ingredients on all platforms in parallel
-2. **Extract Cart Details**: Retrieve actual cart state from each platform
-3. **User Edits**: (Simulated) Record cart modifications as diffs
-4. **Apply Diffs**: Apply user edits to actual platform carts
-5. **Final Cart State**: Re-extract cart details after edits
-6. **Mock Payment**: Demonstrate Knot API transaction structure
-
-### Output
-
-- Console: Step-by-step progress and cart summaries
-- File: `data/cart_state.json` with complete cart state
-
-## Testing
-
-Run phase-specific tests:
-
-```bash
-python tests/test_phase1.py  # Core utilities
-python tests/test_phase2.py  # Data models
-python tests/test_phase3.py  # Agents (structure only)
-python tests/test_phase4.py  # Knot API
-python tests/test_phase5.py  # Orchestrator
-python tests/test_phase6.py  # Main entry point
-```
-
-## Configuration
-
-### Platform Configuration (`config/platforms.py`)
-
-Each platform has:
-- Name and merchant ID (for Knot API)
-- URLs (search, cart, login)
-- User data directory for session storage
-
-### Adding New Platforms
-
-1. Add platform config to `config/platforms.py`
-2. Add merchant ID to `knot_api/config.py` (if available)
-3. Update platform list in `main.py`
-
-## Data Models
-
-### CartItem
-- Tracks individual product with ingredient request, actual product name, price, quantity, status
-
-### PlatformCart
-- Complete cart for one platform with items list, fees, totals
-- Methods: `add_item()`, `remove_item()`, `calculate_totals()`
-
-### CartDiff
-- Records user edits (add/remove/update_quantity)
-- Tracked as unapplied until Edit Cart agent executes
-
-### CartState
-- Global state manager for all platform carts and diffs
-- JSON persistence to `data/cart_state.json`
-
-## Architecture Decisions
-
-### Why BrowserUse?
-- **Resilient**: AI adapts to UI changes without brittle selectors
-- **Cross-Platform**: Same logic works across different sites
-- **Popup Handling**: Automatically dismisses blocking elements
-
-### Why Parallel Execution?
-- **Speed**: Process 3-4 platforms simultaneously
-- **Isolation**: One platform failure doesn't affect others
-- **User Experience**: Faster overall workflow
-
-### Why Session Persistence?
-- **Convenience**: Login once, reuse sessions
-- **Security**: No password storage
-- **Reliability**: Fewer authentication failures
-
-## Knot API Integration
-
-Knot API demonstrates transaction data structure:
-
-- Retrieves sample transactions with SKU-level items
-- Shows what real order data looks like
-- Falls back to mock data if API unavailable
-- Used for payment demonstration only (no actual payments)
-
-## Troubleshooting
-
-### Session Expired
-Re-run SignIn agent for the platform:
-```bash
-python -m agents.signin_agent <platform>
-```
-
-### Browser Automation Fails
-- Check internet connection
-- Verify Playwright chromium installed
-- Check platform didn't change UI significantly
-- Review logs for specific errors
-
-### API Key Issues
-- Verify GEMINI_API_KEY in `.env`
-- Check API key has sufficient quota
-- Test with `python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('GEMINI_API_KEY'))"`
-
-### Resource Issues
-- Reduce number of platforms processed
-- Close other applications
-- Ensure 8GB+ RAM available
-
-## Development
-
-### Project Structure
+## 📋 Project Structure
 
 ```
 HackPton_Delivery_App/
-├── agents/              # Browser automation agents
-├── config/              # Platform configurations
-├── data/                # Runtime cart state storage
-├── knot_api/            # Knot API integration
-├── models/              # Data models
-├── tests/               # Phase-specific tests
-├── utils/               # Shared utilities
-├── orchestrator.py      # Parallel execution coordinator
-├── main.py              # CLI entry point
-└── requirements.txt     # Dependencies
+├── server/                     # FastAPI Backend
+│   ├── main.py                 # Main API application
+│   ├── models.py               # Pydantic models
+│   ├── supabase_client.py      # Supabase integration
+│   ├── gemini_service.py       # Gemini AI service
+│   ├── agent_runner.py         # Agent orchestration
+│   ├── ws_manager.py           # WebSocket manager
+│   ├── requirements.txt        # Python dependencies
+│   ├── .env.example            # Environment template
+│   └── tests/                  # Backend tests
+├── mobile/                     # React Native Expo Frontend
+│   ├── src/                    # Source code
+│   ├── package.json            # Node dependencies
+│   └── .env.example            # Mobile env template
+├── agents/                     # Browser automation agents
+│   ├── search_and_add_agents/  # Shopping agents
+│   ├── edit_cart_agent_nova.py # Cart editing
+│   └── cart_detail_agent_nova.py # Cart details
+├── venv/                       # Python virtual environment
+├── IMPLEMENTATION_PLAN.md      # Detailed implementation plan
+└── README.md                   # This file
 ```
 
-### Code Quality
+---
 
-- Type hints throughout
-- Comprehensive docstrings
-- Logging at INFO level
-- Exception handling per platform
-- Retry logic with exponential backoff
+## 🚀 Quick Start
 
-## Limitations (MVP)
+### Prerequisites
+- Python 3.9+
+- Node.js 18+
+- Supabase account ([sign up](https://supabase.com))
+- Gemini API key ([get key](https://aistudio.google.com/app/apikey))
 
-- Mock payment only (no real transactions)
-- No price comparison/optimization
-- First available product selected
-- Manual sign-in required
-- Desktop/local execution only
+### Setup
 
-## Future Enhancements
+#### Windows
+```bash
+# Run the setup script
+setup_project.bat
 
-- Web UI for cart management
-- Price comparison across platforms
-- Smart product matching
-- Recipe-to-ingredients API (Gemini)
-- Cloud deployment
-- Real payment integration
-- Order tracking
+# Or manually:
+python -m venv venv
+venv\Scripts\activate
+pip install -r server\requirements.txt
+copy server\.env.example server\.env
+# Edit server\.env with your credentials
+```
 
-## License
+#### Linux/Mac
+```bash
+# Run the setup script
+chmod +x setup_project.sh
+./setup_project.sh
 
-MIT License - HackPrinceton 2024
+# Or manually:
+python3 -m venv venv
+source venv/bin/activate
+pip install -r server/requirements.txt
+cp server/.env.example server/.env
+# Edit server/.env with your credentials
+```
 
-## Credits
+---
 
-- **Browser Automation**: BrowserUse + Playwright
-- **AI Models**: Google Gemini (gemini-1.5-flash)
-- **Transaction API**: Knot API
-- **Platforms**: Instacart, Uber Eats, DoorDash
+## 🔧 Configuration
 
+### 1. Supabase Setup
+1. Create a new project at [supabase.com](https://supabase.com/dashboard)
+2. Go to SQL Editor and run `server/supabase_schema.sql`
+3. Get your API keys from Settings → API
+4. Add to `server/.env`:
+   ```
+   SUPABASE_URL=https://xxxxx.supabase.co
+   SUPABASE_SERVICE_ROLE_KEY=your-key-here
+   SUPABASE_ANON_KEY=your-anon-key-here
+   ```
+
+### 2. Gemini AI Setup
+1. Get API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+2. Add to `server/.env`:
+   ```
+   GEMINI_API_KEY=your-gemini-key-here
+   ```
+
+### 3. Mobile App Setup (Coming Soon)
+```bash
+cd mobile
+npm install
+cp .env.example .env
+# Edit mobile/.env with backend URL
+```
+
+---
+
+## 🏃 Running the Application
+
+### Backend Server
+```bash
+# Activate virtual environment
+source venv/bin/activate  # Linux/Mac
+# OR
+venv\Scripts\activate  # Windows
+
+# Start server
+cd server
+python -m uvicorn server.main:app --reload --host 0.0.0.0 --port 8000
+
+# Server will be available at: http://localhost:8000
+# API docs at: http://localhost:8000/docs
+```
+
+### Run Tests
+```bash
+# Activate venv first
+source venv/bin/activate  # Linux/Mac
+venv\Scripts\activate     # Windows
+
+# Run all tests
+pytest server/tests/ -v
+
+# Run specific test file
+pytest server/tests/test_phase1_2.py -v
+
+# Run with coverage
+pytest server/tests/ --cov=server --cov-report=html
+
+# Run manual test script
+python server/test_api.py
+```
+
+### Mobile App (Coming Soon)
+```bash
+cd mobile
+npm start
+# or
+npx expo start
+```
+
+---
+
+## 📡 API Endpoints
+
+### Health & Status
+- `GET /` - Root endpoint
+- `GET /health` - Health check
+
+### Authentication
+- `POST /auth/signup` - Create new user
+- `POST /auth/signin` - Sign in existing user
+- `GET /auth/me` - Get current user
+
+### Recipe & Ingredients
+- `POST /api/recipe` - Convert recipe query to ingredients
+
+### Agent Orchestration
+- `POST /api/start-agents` - Start shopping agents
+- `GET /api/job/{job_id}/status` - Get agent job status
+
+### Cart Management
+- `GET /api/cart-status` - Get cart status for all platforms
+- `POST /api/cart-diffs` - Save cart modifications
+- `POST /api/apply-diffs` - Apply cart modifications
+
+### Checkout
+- `POST /api/checkout` - Process checkout and create transaction
+
+### WebSocket
+- `WS /ws/agent-progress` - Real-time agent progress updates
+
+Full API documentation: http://localhost:8000/docs
+
+---
+
+## 🧪 Testing
+
+### Phase-by-Phase Testing
+The project follows a phased implementation with comprehensive test suites. See `IMPLEMENTATION_PLAN.md` for detailed testing procedures.
+
+#### Current Test Coverage
+- ✅ Phase 1.2: FastAPI Core Setup
+- ✅ Phase 1.3: Authentication Endpoints  
+- ✅ Phase 1.4: Gemini Recipe Service
+- ⏳ Phase 2.1: Agent Runner
+- ⏳ Phase 2.2: WebSocket Manager
+- ⏳ Phase 2.3: Agent Orchestration
+
+### Test Commands
+```bash
+# Backend unit tests
+pytest server/tests/ -v
+
+# Integration tests
+python server/test_api.py
+
+# Specific phase tests
+pytest server/tests/test_phase1_*.py -v
+
+# Mobile tests (coming soon)
+cd mobile && npm test
+```
+
+---
+
+## 🏗️ Architecture
+
+### Backend (FastAPI + Python)
+- **FastAPI**: Modern async web framework
+- **Supabase**: PostgreSQL database + auth
+- **Gemini AI**: Recipe to ingredients conversion
+- **WebSockets**: Real-time agent progress updates
+- **Browser Agents**: Nova Act for automated shopping
+
+### Frontend (React Native + Expo)
+- **Expo**: React Native development platform
+- **React Navigation**: Screen navigation
+- **Supabase JS**: Client-side auth
+- **WebSocket**: Real-time updates from backend
+
+### Data Flow
+1. User enters recipe query
+2. Gemini AI converts to ingredient list
+3. User selects platforms (Instacart, UberEats)
+4. Browser agents add items to carts
+5. User reviews/modifies cart items
+6. Checkout processes mock payment
+7. Transaction stored in Supabase
+
+---
+
+## 📚 Documentation
+
+- [Implementation Plan](IMPLEMENTATION_PLAN.md) - Detailed phased development plan
+- [Supabase Setup](server/SUPABASE_SETUP.md) - Database setup guide
+- [API Documentation](http://localhost:8000/docs) - Interactive API docs (when server running)
+
+---
+
+## 🛠️ Development
+
+### Project Conventions
+- Python code follows PEP 8
+- Use type hints for Python
+- TypeScript for mobile app
+- Test every endpoint before moving forward
+- Make progressive git commits (never push)
+
+### Git Workflow
+```bash
+# Make changes
+git add .
+git commit -m "feat: description of changes"
+
+# ⚠️ NEVER push to remote during development
+# Only commit locally
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Server won't start
+- Ensure virtual environment is activated
+- Check `.env` file has all required variables
+- Verify Supabase is accessible
+- Check port 8000 is not in use
+
+### Tests failing
+- Verify server is running on http://localhost:8000
+- Check Supabase connection
+- Ensure test user credentials are valid
+- Review logs in console
+
+### Agent errors
+- Check `GEMINI_API_KEY` is set
+- Ensure Chrome/Chromium is installed
+- Review agent logs in console
+- Verify shopping list JSON format
+
+---
+
+## 📝 Todo List
+
+See `IMPLEMENTATION_PLAN.md` for complete task breakdown.
+
+### Backend
+- [x] FastAPI core setup
+- [x] Supabase integration
+- [x] Auth endpoints
+- [x] Recipe/ingredients endpoint
+- [x] WebSocket manager
+- [x] Agent runner
+- [x] Cart management endpoints
+- [x] Checkout endpoint
+
+### Frontend
+- [ ] Expo app scaffold
+- [ ] Auth screens
+- [ ] Navigation setup
+- [ ] Recipe input screen
+- [ ] Ingredients selection
+- [ ] Agent progress screen
+- [ ] Cart status screen
+- [ ] Checkout screen
+
+### Testing & Polish
+- [ ] Complete E2E tests
+- [ ] Error handling
+- [ ] UI polish
+- [ ] Documentation
+- [ ] Deployment prep
+
+---
+
+## 👥 Contributors
+
+- Backend: FastAPI + Supabase + Gemini
+- Frontend: React Native + Expo
+- Agents: Nova Act automation
+
+---
+
+## 📄 License
+
+This project is for educational/demonstration purposes.
+
+---
+
+## 🙏 Acknowledgments
+
+- [Supabase](https://supabase.com) - Backend as a Service
+- [Google Gemini](https://ai.google.dev) - AI/ML API
+- [Expo](https://expo.dev) - React Native platform
+- [FastAPI](https://fastapi.tiangolo.com) - Web framework
+- [Nova Act](https://www.novaact.ai) - Browser automation
+
+---
+
+**Made with ❤️ for hackathon**

@@ -1,11 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Ingredient, PlatformSummary, Stage } from '@/lib/types';
 import { api } from '@/lib/api-client';
 import { IngredientCard } from '@/components/IngredientCard';
 import { PlatformCard } from '@/components/PlatformCard';
+import { KeywordChips } from '@/components/KeywordChips';
 import { useJobStatus } from '@/hooks/useJobStatus';
+import { useAuth } from '@/hooks/useAuth';
+import { getPreferences } from '@/lib/api';
 
 export default function Home() {
   const [stage, setStage] = useState<Stage>('search');
@@ -15,8 +18,17 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [platforms, setPlatforms] = useState<PlatformSummary[]>([]);
+  const [preferences, setPreferences] = useState<string[]>([]);
   
   const { data: jobStatus } = useJobStatus(jobId);
+  const { token } = useAuth();
+  
+  // Load user preferences on mount
+  useEffect(() => {
+    if (token) {
+      getPreferences(token).then(setPreferences).catch(() => {});
+    }
+  }, [token]);
   
   // Stage 1: Search for recipe
   const handleSearch = async () => {
@@ -110,6 +122,15 @@ export default function Home() {
             <h2 className="text-2xl font-semibold mb-4 text-center">
               What recipe or ingredients do you want to order?
             </h2>
+            
+            {/* Phase 3: Recommendations */}
+            {preferences.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Recommended for you:</h3>
+                <KeywordChips keywords={preferences} />
+              </div>
+            )}
+            
             <div className="flex gap-4">
               <input
                 type="text"

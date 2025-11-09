@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/useAuth'
 import { getOrderDetail, OrderDetailResponse } from '@/lib/api'
 import { Header } from '@/components/Header'
+import { Navigation } from '@/components/Navigation'
 
 export default function OrderDetailPage() {
   const { orderId } = useParams()
@@ -39,6 +40,7 @@ export default function OrderDetailPage() {
     <div className="min-h-screen py-12 px-4" style={{ background: '#F5F5F5' }}>
       <div className="max-w-4xl mx-auto">
         <Header />
+        <Navigation />
         
         <div className="card max-w-2xl mx-auto">
           {/* Success Icon */}

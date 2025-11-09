@@ -7,6 +7,7 @@ import { IngredientCard } from '@/components/IngredientCard';
 import { PlatformCard } from '@/components/PlatformCard';
 import { KeywordChips } from '@/components/KeywordChips';
 import { Header } from '@/components/Header';
+import { Navigation } from '@/components/Navigation';
 import { useJobStatus } from '@/hooks/useJobStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { getPreferences } from '@/lib/api';
@@ -105,6 +106,7 @@ export default function Home() {
     <div className="min-h-screen py-12 px-4" style={{ background: '#F5F5F5' }}>
       <div className="max-w-4xl mx-auto">
         <Header />
+        <Navigation />
         
         {/* Stage 1: Recipe Search */}
         {stage === 'search' && (

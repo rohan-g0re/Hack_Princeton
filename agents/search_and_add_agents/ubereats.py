@@ -2,26 +2,104 @@ import json
 import re
 from nova_act import NovaAct
 import os
+from pathlib import Path
 import google.generativeai as genai
 from dotenv import load_dotenv
+import requests
 
 # Load environment variables from .env file
-load_dotenv()
+# load_dotenv()
 
 # Browser args enables browser debugging on port 9222.
 os.environ["NOVA_ACT_BROWSER_ARGS"] = "--remote-debugging-port=9222"
 
-# Configure Gemini
-api_key = os.getenv("GEMINI_API_KEY")
-if not api_key:
-    raise ValueError("GEMINI_API_KEY not found in .env file. Get your key from: https://aistudio.google.com/app/apikey")
+# # Configure Gemini
+# api_key = os.getenv("GEMINI_API_KEY")
+# if not api_key:
+#     raise ValueError("GEMINI_API_KEY not found in .env file. Get your key from: https://aistudio.google.com/app/apikey")
 
-genai.configure(api_key=api_key)
-model = genai.GenerativeModel('gemini-2.0-flash-exp')
+# genai.configure(api_key=api_key)
+# model = genai.GenerativeModel('gemini-2.0-flash-exp')
+
+load_dotenv()
+GROK_API_KEY = os.getenv("GROK_API_KEY")
+if not GROK_API_KEY:
+    raise ValueError("GROK_API_KEY not found in .env file. Please get your key from xAI API console.")
+
+# Base endpoint (example — check docs for current URL)
+GROK_API_URL = "https://api.x.ai/v1/chat/completions"
+
+
+def call_grok(prompt: str, model: str="grok-4-fast-reasoning", max_tokens: int=512, temperature: float=0.0):
+    headers = {
+        "Authorization": f"Bearer {GROK_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "system", "content": "You are a precise cooking measurement converter."},
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": max_tokens,
+        "temperature": temperature
+    }
+    resp = requests.post(GROK_API_URL, headers=headers, json=body)
+    resp.raise_for_status()
+    data = resp.json()
+    # The structure of response depends on version; assume something like:
+    return data["choices"][0]["message"]["content"]
+
+
+def estimate_weight_with_grok(item_name: str, quantity: str) -> dict:
+    prompt = f"""
+Convert the following ingredient quantity to grams.
+Ingredient: {item_name}
+Quantity: {quantity}
+Provide ONLY a JSON response in this exact format:
+{{
+    "weight_grams": <number_or_null>,
+    "unit": "g",
+    "confidence": "high/medium/low"
+}}
+Make your best estimate.
+
+Rules:
+- Be as accurate as possible using standard cooking conversions
+- For liquids, use density (water = 1g/ml, oil = 0.92g/ml, milk = 1.03g/ml, etc.)
+- For dry ingredients, use standard conversions (1 cup flour = 120g, 1 tbsp sugar = 12.5g, etc.)
+- Round to nearest gram
+- If you cannot determine, set weight_grams to null
+
+Example conversions:
+- 2 tbsp sugar → 25g
+- 1 cup flour → 120g
+- 1/2 cup milk → 120g
+- 1 tsp salt → 6g
+"""
+    try:
+        response_text = call_grok(prompt)
+        # Clean up markdown/codeblock if present
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+
+        result = json.loads(response_text)
+        if result.get("weight_grams") and result["weight_grams"] > 0:
+            print(f"  ✓ Estimated {quantity} {item_name} = {result['weight_grams']}g (confidence: {result.get('confidence','unknown')})")
+            return result
+        else:
+            print(f"  ⚠ Could not estimate weight for {quantity} {item_name}")
+            return None
+    except Exception as e:
+        print(f"  ✗ Error estimating weight for {item_name}: {e}")
+        return None
 
 def load_shopping_list(path="shopping_list.json"):
     with open(path, "r") as f:
         return json.load(f)["shopping_list"]
+
 
 # remove descriptors that don't help store search
 DESCRIPTORS = {
@@ -139,7 +217,7 @@ for entry in shopping_list:
     else:
         # Unit-based measurements - use Gemini to estimate weight
         print(f"Converting measurement for: {item} - {qty}")
-        weight_info = estimate_weight_with_gemini(item, qty)
+        weight_info = estimate_weight_with_grok(item, qty)
         
         if weight_info and weight_info.get("weight_grams"):
             target_weight = weight_info["weight_grams"]
@@ -149,10 +227,19 @@ for entry in shopping_list:
             # SIMPLIFIED INSTRUCTION
             instruction += (
                 f"Search for '{item}'. "
-                f"You need approximately {target_weight}g (about {target_oz} oz). "
-                f"Find the package that contains at least this amount. "
+                f"look for item in the list"
+                # f"You need approximately {target_weight}g (about {target_oz} oz). "
+                # f"Find the package that contains at least this amount. "
                 f"Add ONLY 1 package to cart. "
                 f"Do not add multiple packages. "
+
+                # f"Search for '{item}'. "
+                # f"Look for {item} and available package sizes in grams or ounces. "
+                # f"Target weight needed: {target_weight}g (about {target_oz} oz). "
+                # f"If packages are smaller than {target_weight}g, calculate how many packages are needed to meet or exceed {target_weight}g and add that many to cart. "
+                # f"For example, if target is {target_weight}g and packages are 3g each, add {(target_weight + 2) // 3} packages. "
+                # f"If a package is larger than or equal to {target_weight}g, add 1 to cart. "
+                # f"Prefer the option closest to {target_weight}g without going significantly over. Do not add multiple packages if not needed. "
             )
         else:
             # Fallback to smallest pack if weight estimation fails
@@ -192,8 +279,8 @@ print("STEP 2: Extracting cart details...")
 print("="*50)
 
 cart_extraction_instruction = (
-    "You are on the Ubereats cart page. "
-    "Look at all items in the cart and extract the following information for each item: "
+    "You are on the Ubereats page and on cart section. "
+    "Look at all items already added in the cart by you earlier and scroll if necessary and extract the following information for each item: "
     "product name, quantity, price per unit, total price, and package size. "
     "Format your response as a simple list like this:\n"
     "Item 1: [name] | Qty: [number] | Price: $[amount] | Size: [size]\n"
@@ -218,14 +305,14 @@ try:
     print("="*50)
     
     # Save to text file
-    with open("uber_cart_details.txt", "w") as f:
-        f.write("INSTACART CART DETAILS\n")
-        f.write("="*50 + "\n\n")
-        f.write(cart_text)
-        f.write("\n\n" + "="*50 + "\n")
-        f.write(f"Extraction Date: {os.popen('date').read().strip()}\n")
+    # with open("uber_cart_details.txt", "w") as f:
+    #     f.write("INSTACART CART DETAILS\n")
+    #     f.write("="*50 + "\n\n")
+    #     f.write(cart_text)
+    #     f.write("\n\n" + "="*50 + "\n")
+    #     f.write(f"Extraction Date: {os.popen('date').read().strip()}\n")
     
-    print("\n✓ Cart details saved to uber_cart_details.txt")
+    # print("\n✓ Cart details saved to uber_cart_details.txt")
     
     # Try to parse into structured format using regex
     cart_items = []
@@ -253,9 +340,12 @@ try:
         "cart_items": cart_items,
         "extraction_successful": len(cart_items) > 0
     }
-    
+    import os
+    os.makedirs("../../cart_jsons", exist_ok=True)
     # Save JSON
-    with open("uber_cart_details.json", "w") as f:
+    output_path = Path(__file__).resolve().parents[2] / "cart_jsons" / "uber_cart_details.json"
+    with open(output_path, "w") as f:
+    # with open("../../cart_json/uber_cart_details.json", "w") as f:
         json.dump(cart_data, f, indent=2)
     
     print("✓ Structured data saved to uber_cart_details.json")

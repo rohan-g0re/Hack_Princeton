@@ -1,66 +1,104 @@
-# knot_api/mock_data.py
+import json
+from datetime import date
+from typing import Any, Dict, List, Optional
+import os
 
-from datetime import datetime, timedelta
-import random
-import uuid
-from typing import Dict, List
 
-def generate_mock_transactions(merchant_id: int, limit: int = 5) -> Dict:
+def _money(x: Any) -> float:
+    """Parse price fields like '$4.99', '4.99', or float."""
+    if x is None:
+        return 0.0
+    if isinstance(x, (int, float)):
+        return float(x)
+    s = str(x).replace("$", "").strip()
+    try:
+        return float(s)
+    except ValueError:
+        return 0.0
+
+
+def summarize_cart(
+    cart_path: str,
+    *,
+    merchant_name: Optional[str] = None,
+    order_total_override: Optional[float] = None
+) -> str:
     """
-    Generate mock transaction data
-    
-    Used when Knot API is unavailable or for demo purposes
+    Summarize a cart file if it exists.
+    If the file is missing, return an empty string instead of printing anything.
     """
-    transactions = []
-    
-    # Sample grocery items
-    sample_items_pool = [
-        {"name": "Organic Whole Milk", "base_price": 5.99, "sku_prefix": "MILK"},
-        {"name": "Large Eggs (Dozen)", "base_price": 4.49, "sku_prefix": "EGGS"},
-        {"name": "Fresh Paneer", "base_price": 6.99, "sku_prefix": "PANE"},
-        {"name": "Romaine Lettuce", "base_price": 3.99, "sku_prefix": "LETT"},
-        {"name": "Cherry Tomatoes", "base_price": 2.99, "sku_prefix": "TOMA"},
-        {"name": "Extra Virgin Olive Oil", "base_price": 8.99, "sku_prefix": "OLIV"},
-        {"name": "Caesar Dressing", "base_price": 4.49, "sku_prefix": "DRES"},
-        {"name": "Parmesan Cheese", "base_price": 7.99, "sku_prefix": "CHES"},
-    ]
-    
-    for i in range(limit):
-        # Random number of items per transaction
-        num_items = random.randint(2, 6)
-        selected_items = random.sample(sample_items_pool, num_items)
-        
-        items = []
-        transaction_total = 0.0
-        
-        for item_template in selected_items:
-            quantity = random.randint(1, 3)
-            price = round(item_template["base_price"] * random.uniform(0.9, 1.1), 2)
-            
-            item = {
-                "sku": f"{item_template['sku_prefix']}-{random.randint(100, 999)}",
-                "name": item_template["name"],
-                "quantity": quantity,
-                "price": price
-            }
-            items.append(item)
-            transaction_total += price * quantity
-        
-        transaction = {
-            "id": f"mock_txn_{uuid.uuid4().hex[:8]}",
-            "merchant_id": merchant_id,
-            "amount": round(transaction_total, 2),
-            "date": (datetime.now() - timedelta(days=random.randint(1, 30))).isoformat(),
-            "status": "completed",
-            "items": items
-        }
-        
-        transactions.append(transaction)
-    
-    return {
-        "transactions": transactions,
-        "cursor": None,
-        "total_count": limit,
-        "mock": True  # Indicate this is mock data
-    }
 
+    if not os.path.exists(cart_path):
+        return ""  # ← quietly skip missing files
+
+    try:
+        with open(cart_path, "r", encoding="utf-8") as f:
+            cart_data = json.load(f)
+    except Exception:
+        return ""  # skip corrupted/malformed files silently
+
+    # Infer merchant name from filename if not provided
+    if merchant_name is None:
+        file_name = os.path.basename(cart_path).lower()
+        if "instacart" in file_name:
+            merchant_name = "Instacart"
+        elif "uber" in file_name:
+            merchant_name = "Uber Eats"
+        elif "doordash" in file_name:
+            merchant_name = "DoorDash"
+        else:
+            merchant_name = "Your Store"
+
+    items: List[Dict[str, Any]] = cart_data.get("cart_items", [])
+    subtotal = _money(cart_data.get("subtotal"))
+    if subtotal == 0:
+        subtotal = sum(_money(i.get("price")) * int(i.get("quantity", 1)) for i in items)
+
+    total = order_total_override if order_total_override else subtotal
+    today = date.today().strftime("%B %d, %Y")
+
+    item_lines = "\n".join([f"- {i['name']}" for i in items]) or "- (No items found)"
+
+    # Optional payment line
+    payment = cart_data.get("payment", {})
+    brand = payment.get("brand")
+    last_four = payment.get("last_four")
+
+    payment_line = ""
+    if brand:
+        payment_line = f"This order was paid using your {brand} card"
+        if last_four:
+            payment_line += f" ending in {last_four}"
+        payment_line += "."
+
+    summary = (
+        f"Your last {merchant_name} order was placed on {today} for a total of ${total:.2f}. "
+        f"You ordered:\n\n{item_lines}\n"
+    )
+
+    if payment_line:
+        summary += "\n" + payment_line
+
+    return summary
+
+
+def payment_line_only(cart_path: str) -> str:
+    """Return only the payment line (if file exists and payment data found)."""
+    if not os.path.exists(cart_path):
+        return ""
+    try:
+        with open(cart_path, "r", encoding="utf-8") as f:
+            cart_data = json.load(f)
+    except Exception:
+        return ""
+
+    payment = cart_data.get("payment", {})
+    brand = payment.get("brand")
+    last_four = payment.get("last_four")
+    if not brand:
+        return ""
+    return (
+        f"This order was paid using your {brand} card"
+        + (f" ending in {last_four}" if last_four else "")
+        + "."
+    )

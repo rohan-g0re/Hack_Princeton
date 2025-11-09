@@ -1,257 +1,240 @@
-# Grocery Delivery SuperApp MVP
+<div align="center">
+  <img src="./assets/logo.jpeg" alt="MealPilot Logo" width="200"/>
+  
+  # 🥘 MealPilot: AutoCart
+  
+  **Compare grocery costs accross popular platforms to save time and money.**
 
-Multi-platform grocery ordering super app with parallel browser automation agents, cart management with diff tracking, and Knot API integration for transaction demonstration.
+  ## [Youtube Video - Link](https://www.youtube.com/watch?v=Ezjk6Yx-GTk)
+  
+</div>
 
-## Features
+MealPilot is an intelligent grocery comparison platform that helps you find the best prices groceries across multiple delivery platforms. Simply enter your recipe or ingredients, and we'll automatically compare prices across Amazon, Instacart, and Uber Eats.
 
-- **Multi-Platform Support**: Instacart, Uber Eats, DoorDash
-- **Parallel Execution**: All platforms processed simultaneously using asyncio
-- **AI-Powered Automation**: Uses Gemini + BrowserUse for resilient browser automation
-- **Cart Diff Tracking**: Record and apply user edits before checkout
-- **Session Management**: Persistent browser contexts maintain login state
-- **Knot API Integration**: Transaction data demonstration with SKU-level details
+---
 
-## Architecture
+## ✨ Features
 
-### Components
+- 🔍 **Smart Recipe Search** - Enter any recipe name and get instant ingredient lists
+- 📊 **Multi-Platform Price Comparison** - Compare prices across Instacart, Uber Eats, and more
+- 💰 **Instant Savings Calculator** - See exactly how much you save by choosing the best deal
+- 📦 **Order History** - Track all your past orders with detailed receipts
+- 🎨 **Beautiful UI** - Clean, modern design with intuitive navigation
+- ⚡ **Real-Time Updates** - Live price comparison updates as you shop
 
-1. **Agents** (`agents/`)
-   - `SignInAgent`: Manual user authentication with session persistence
-   - `SearchOrderAgent`: AI-powered search and cart addition (Gemini + BrowserUse)
-   - `EditCartAgent`: Apply user cart modifications
-   - `CartDetailAgent`: Extract cart information
+---
 
-2. **Orchestrator** (`orchestrator.py`)
-   - Parallel execution coordinator using `asyncio.gather()`
-   - Exception isolation per platform
-   - Cart state persistence
-
-3. **Data Models** (`models/`)
-   - `CartItem`, `PlatformCart`, `CartDiff`, `CartState`
-   - JSON serialization for persistence
-
-4. **Knot API** (`knot_api/`)
-   - Transaction sync with mock data fallback
-   - SKU-level product data
-
-5. **Main Entry** (`main.py`)
-   - CLI application
-   - 6-step workflow orchestration
-
-## Installation
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.11+
-- 8-16GB RAM (for parallel browser instances)
-- GEMINI_API_KEY in `.env` file
+- **Python 3.11+** for backend
+- **Node.js 18+** for frontend
+- **Supabase Account** for database
 
-### Setup
+### Backend Setup
 
 ```bash
-# Install dependencies
+cd backend
+python -m venv venv
+venv\Scripts\activate
 pip install -r requirements.txt
-
-# Install Playwright browsers
-playwright install chromium
-
-# Verify installation
-python -c "import playwright; import browser_use; print('Ready!')"
+uvicorn app.main:app --reload --port 8000
 ```
 
-### Environment Configuration
-
-Create `.env` file in project root:
-
-```
-GEMINI_API_KEY=your_gemini_api_key_here
-```
-
-## Usage
-
-### Step 1: Sign In to Platforms
-
-Run SignIn agent for each platform (one-time setup):
+### Frontend Setup
 
 ```bash
-python -m agents.signin_agent instacart
-python -m agents.signin_agent ubereats
-python -m agents.signin_agent doordash
+cd frontend
+npm install
+npm run dev
 ```
 
-A browser will open - manually log in. Session persists in `user_data_<platform>/` directories.
+Visit **http://localhost:3001** to start comparing prices!
 
-### Step 2: Run Complete Workflow
+---
 
-```bash
-# With default ingredients (milk, eggs, paneer, tomatoes)
-python main.py
+## 🏗️ Tech Stack
 
-# With custom ingredients
-python main.py milk eggs bread cheese tomatoes
-```
+### Frontend
+- **Next.js 14** - React framework with App Router
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **Custom Design System** - MealPilot brand colors and components
 
-### Workflow Steps
+### Backend
+- **Amazon Nova Act** - Web Automation Agents
+- **Gemini API** - AI-powered recipe parsing
+- **Supabase** - Database and authentication
+- **Knot API** - E-commerce integration
+- **FastAPI** - Modern Python web framework
 
-1. **Search & Order**: Agents search for ingredients on all platforms in parallel
-2. **Extract Cart Details**: Retrieve actual cart state from each platform
-3. **User Edits**: (Simulated) Record cart modifications as diffs
-4. **Apply Diffs**: Apply user edits to actual platform carts
-5. **Final Cart State**: Re-extract cart details after edits
-6. **Mock Payment**: Demonstrate Knot API transaction structure
+---
 
-### Output
+## 📱 How It Works
 
-- Console: Step-by-step progress and cart summaries
-- File: `data/cart_state.json` with complete cart state
+### 1️⃣ Search for Recipe
+Enter any recipe name (e.g., "Spaghetti Carbonara" or "Veggie Pizza")
 
-## Testing
+### 2️⃣ Review Ingredients
+AI extracts and lists all required ingredients with quantities
 
-Run phase-specific tests:
+### 3️⃣ Compare Prices
+Our automation searches across platforms and compares prices in real-time
 
-```bash
-python tests/test_phase1.py  # Core utilities
-python tests/test_phase2.py  # Data models
-python tests/test_phase3.py  # Agents (structure only)
-python tests/test_phase4.py  # Knot API
-python tests/test_phase5.py  # Orchestrator
-python tests/test_phase6.py  # Main entry point
-```
+### 4️⃣ Save Money
+Choose the best deal and save on your grocery shopping!
 
-## Configuration
+---
 
-### Platform Configuration (`config/platforms.py`)
+## 🎯 Key Capabilities
 
-Each platform has:
-- Name and merchant ID (for Knot API)
-- URLs (search, cart, login)
-- User data directory for session storage
+### Automated Price Comparison
+- Searches multiple platforms simultaneously
+- Extracts accurate pricing data
+- Calculates totals including tax
+- Identifies the best deal automatically
 
-### Adding New Platforms
+### Smart Recipe Processing
+- Uses Google Gemini AI for intelligent recipe parsing
+- Extracts ingredients with quantities and units
+- Handles various recipe formats
+- Suggests alternatives when items aren't found
 
-1. Add platform config to `config/platforms.py`
-2. Add merchant ID to `knot_api/config.py` (if available)
-3. Update platform list in `main.py`
+### Order Management
+- Complete order history
+- Detailed receipts with itemized pricing
+- Order status tracking
+- Receipt image generation (Phase 3)
 
-## Data Models
+---
 
-### CartItem
-- Tracks individual product with ingredient request, actual product name, price, quantity, status
-
-### PlatformCart
-- Complete cart for one platform with items list, fees, totals
-- Methods: `add_item()`, `remove_item()`, `calculate_totals()`
-
-### CartDiff
-- Records user edits (add/remove/update_quantity)
-- Tracked as unapplied until Edit Cart agent executes
-
-### CartState
-- Global state manager for all platform carts and diffs
-- JSON persistence to `data/cart_state.json`
-
-## Architecture Decisions
-
-### Why BrowserUse?
-- **Resilient**: AI adapts to UI changes without brittle selectors
-- **Cross-Platform**: Same logic works across different sites
-- **Popup Handling**: Automatically dismisses blocking elements
-
-### Why Parallel Execution?
-- **Speed**: Process 3-4 platforms simultaneously
-- **Isolation**: One platform failure doesn't affect others
-- **User Experience**: Faster overall workflow
-
-### Why Session Persistence?
-- **Convenience**: Login once, reuse sessions
-- **Security**: No password storage
-- **Reliability**: Fewer authentication failures
-
-## Knot API Integration
-
-Knot API demonstrates transaction data structure:
-
-- Retrieves sample transactions with SKU-level items
-- Shows what real order data looks like
-- Falls back to mock data if API unavailable
-- Used for payment demonstration only (no actual payments)
-
-## Troubleshooting
-
-### Session Expired
-Re-run SignIn agent for the platform:
-```bash
-python -m agents.signin_agent <platform>
-```
-
-### Browser Automation Fails
-- Check internet connection
-- Verify Playwright chromium installed
-- Check platform didn't change UI significantly
-- Review logs for specific errors
-
-### API Key Issues
-- Verify GEMINI_API_KEY in `.env`
-- Check API key has sufficient quota
-- Test with `python -c "import os; from dotenv import load_dotenv; load_dotenv(); print(os.getenv('GEMINI_API_KEY'))"`
-
-### Resource Issues
-- Reduce number of platforms processed
-- Close other applications
-- Ensure 8GB+ RAM available
-
-## Development
-
-### Project Structure
+## 📂 Project Structure
 
 ```
 HackPton_Delivery_App/
-├── agents/              # Browser automation agents
-├── config/              # Platform configurations
-├── data/                # Runtime cart state storage
-├── knot_api/            # Knot API integration
-├── models/              # Data models
-├── tests/               # Phase-specific tests
-├── utils/               # Shared utilities
-├── orchestrator.py      # Parallel execution coordinator
-├── main.py              # CLI entry point
-└── requirements.txt     # Dependencies
+├── backend/                    # FastAPI backend
+│   ├── app/
+│   │   ├── agents/            # Platform-specific automation agents
+│   │   ├── routes/            # API endpoints
+│   │   ├── services/          # Business logic
+│   │   └── models/            # Data models
+│   └── data/
+│       ├── cart_jsons/        # Raw cart data
+│       └── knot_api_jsons/    # Processed order data
+├── frontend/                   # Next.js frontend
+│   ├── app/                   # App router pages
+│   ├── components/            # React components
+│   ├── hooks/                 # Custom React hooks
+│   └── lib/                   # Utilities and API clients
+└── README.md
 ```
 
-### Code Quality
+---
 
-- Type hints throughout
-- Comprehensive docstrings
-- Logging at INFO level
-- Exception handling per platform
-- Retry logic with exponential backoff
+## 🏗️ System Architecture
 
-## Limitations (MVP)
+<div align="center">
+  <img src="./assets/system_architecture.jpeg" alt="System Architecture" width="800"/>
+</div>
 
-- Mock payment only (no real transactions)
-- No price comparison/optimization
-- First available product selected
-- Manual sign-in required
-- Desktop/local execution only
+### Architecture Overview
 
-## Future Enhancements
+**Frontend (Next.js)** → **Backend API (FastAPI)** → **Automation Agents (Selenium)** → **E-commerce Platforms**
 
-- Web UI for cart management
-- Price comparison across platforms
-- Smart product matching
-- Recipe-to-ingredients API (Gemini)
-- Cloud deployment
-- Real payment integration
-- Order tracking
+1. **User Interface Layer**: React/Next.js frontend with beautiful MealPilot branding
+2. **API Layer**: FastAPI backend handling requests and orchestrating operations
+3. **Automation Layer**: Selenium-based agents for platform-specific interactions
+4. **Data Processing Layer**: Gemini AI for recipe parsing, Knot API for order formatting
+5. **Storage Layer**: Supabase for user data, orders, and statistics
 
-## License
+---
 
-MIT License - HackPrinceton 2024
+## 🔧 Configuration
 
-## Credits
+### Environment Variables
 
-- **Browser Automation**: BrowserUse + Playwright
-- **AI Models**: Google Gemini (gemini-1.5-flash)
-- **Transaction API**: Knot API
-- **Platforms**: Instacart, Uber Eats, DoorDash
+**Backend** (`.env`):
+```env
+GEMINI_API_KEY=your_gemini_api_key
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_key
+JWT_SECRET=your_jwt_secret
+```
 
+**Frontend** (`.env.local`):
+```env
+NEXT_PUBLIC_BACKEND_URL=http://localhost:8000
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+---
+
+## 🎨 Design System
+
+### Color Palette
+- **Primary Brown**: `#C9915C` - Buttons, accents, branding
+- **Text Primary**: `#3E2723` - Headings and important text
+- **Background**: `#F5F5F5` - Page background
+- **Success Green**: `#4CAF50` - Confirmations and badges
+- **Instacart Orange**: `#FF6B35` - Instacart branding
+- **Uber Eats Green**: `#06C167` - Uber Eats branding
+
+### Components
+- Reusable card component with consistent styling
+- Platform-specific color coding
+- Responsive grid layouts
+- Smooth animations and transitions
+
+---
+
+## 🚦 API Endpoints
+
+### Recipe & Shopping
+- `POST /api/recipes/ingredients` - Extract ingredients from recipe
+- `POST /api/shopping/save` - Save shopping list
+- `POST /api/driver/start` - Start price comparison
+
+### Comparison
+- `GET /api/comparison/{job_id}` - Get comparison results
+- `GET /api/jobs/{job_id}/status` - Check job status
+
+### Orders (Phase 3)
+- `GET /api/orders` - List all orders
+- `GET /api/orders/{order_id}` - Get order details
+- `POST /api/orders/import-knot` - Import from Knot API
+
+---
+
+## 🔮 Roadmap
+
+### Phase 3 (In Progress)
+- ✅ Order history tracking
+- ✅ Detailed receipt views
+- ✅ Price data integration
+- 🔄 Receipt image generation with AI
+- 🔄 User profiling and recommendations
+- 🔄 Statistics dashboard
+
+### Future Enhancements
+- More platform integrations (Amazon Fresh, Walmart+)
+- Dietary preference filtering
+- Meal planning calendar
+- Shopping list sharing
+- Price drop alerts
+
+
+## 🙏 Acknowledgments
+
+- **Amazon Nova Act** for web automation using LLMs
+- **Google Gemini** for AI-powered recipe parsing
+- **Knot API** for e-commerce integration
+- **Supabase** for backend infrastructure
+- **Hack Princeton** for the opportunity to build this project
+
+---
+
+**Built with ❤️ for smarter grocery shopping**
+
+© 2025 MealPilot. All rights reserved.

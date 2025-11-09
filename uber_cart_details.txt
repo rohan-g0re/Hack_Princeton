@@ -1,9 +1,0 @@
-INSTACART CART DETAILS
-==================================================
-
-Item 1: Good & Gather Shredded Iceberg Lettuce (8 oz) | Qty: 1 | Price: $2.51 | Size: 8 oz
-Total items: 1
-Subtotal: $2.51
-
-==================================================
-Extraction Date: Sat Nov  8 19:26:57 EST 2025

@@ -1,8 +1,74 @@
 {
   "shopping_list": [
     {
-      "item": "Lettuce",
-      "quantity": "1 large head"
+      "item": "Chicken (bone-in, skinless, cut into pieces)",
+      "quantity": 2.5,
+      "unit": "lbs"
+    },
+    {
+      "item": "Plain full-fat yogurt",
+      "quantity": 1,
+      "unit": "cup"
+    },
+    {
+      "item": "Ginger-garlic paste",
+      "quantity": 2,
+      "unit": "tablespoons"
+    },
+    {
+      "item": "Lemon juice (freshly squeezed)",
+      "quantity": 2,
+      "unit": "tablespoons"
+    },
+    {
+      "item": "Kashmiri red chili powder",
+      "quantity": 2,
+      "unit": "tablespoons"
+    },
+    {
+      "item": "Coriander powder",
+      "quantity": 1,
+      "unit": "tablespoon"
+    },
+    {
+      "item": "Cumin powder",
+      "quantity": 1,
+      "unit": "tablespoon"
+    },
+    {
+      "item": "Turmeric powder",
+      "quantity": 1,
+      "unit": "teaspoon"
+    },
+    {
+      "item": "Garam masala",
+      "quantity": 1.5,
+      "unit": "teaspoons"
+    },
+    {
+      "item": "Salt",
+      "quantity": 1.5,
+      "unit": "teaspoons"
+    },
+    {
+      "item": "Vegetable oil (or other neutral oil)",
+      "quantity": 2,
+      "unit": "tablespoons"
+    },
+    {
+      "item": "Red food color (optional)",
+      "quantity": 0.25,
+      "unit": "teaspoon"
+    },
+    {
+      "item": "Fresh cilantro (for garnish)",
+      "quantity": 0.25,
+      "unit": "cup"
+    },
+    {
+      "item": "Lemons (for wedges, garnish)",
+      "quantity": 2,
+      "unit": "medium"
     }
   ]
 }

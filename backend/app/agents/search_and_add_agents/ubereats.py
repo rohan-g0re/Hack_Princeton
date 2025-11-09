@@ -8,20 +8,21 @@ from dotenv import load_dotenv
 import requests
 
 # Load environment variables from .env file
-load_dotenv()
+# load_dotenv()
 
 # Browser args enables browser debugging on port 9222.
 os.environ["NOVA_ACT_BROWSER_ARGS"] = "--remote-debugging-port=9222"
 
-# Configure Gemini
+# # Configure Gemini
 # api_key = os.getenv("GEMINI_API_KEY")
 # if not api_key:
 #     raise ValueError("GEMINI_API_KEY not found in .env file. Get your key from: https://aistudio.google.com/app/apikey")
 
 # genai.configure(api_key=api_key)
 # model = genai.GenerativeModel('gemini-2.0-flash-exp')
-GROK_API_KEY = os.getenv("GROK_API_KEY")
 
+load_dotenv()
+GROK_API_KEY = os.getenv("GROK_API_KEY")
 if not GROK_API_KEY:
     raise ValueError("GROK_API_KEY not found in .env file. Please get your key from xAI API console.")
 
@@ -98,6 +99,7 @@ Example conversions:
 def load_shopping_list(path="shopping_list.json"):
     with open(path, "r") as f:
         return json.load(f)["shopping_list"]
+
 
 # remove descriptors that don't help store search
 DESCRIPTORS = {
@@ -194,9 +196,10 @@ shopping_list = load_shopping_list()
 # Base instruction
 instruction = (
     "If a sign-up popup appears, close it. "
+    "add addess to deliver as 89 Northampton St, Boston, MA 02118. "
     "If a CAPTCHA appears, complete the verification. "
     "If any popup appears, close it. "
-    "Search for 'Stop & shop' and click on the store. "
+    "Search for 'Target' and click on the store. "
     "If any popup appears, close it. "
 )
 
@@ -229,6 +232,14 @@ for entry in shopping_list:
                 # f"Find the package that contains at least this amount. "
                 f"Add ONLY 1 package to cart. "
                 f"Do not add multiple packages. "
+
+                # f"Search for '{item}'. "
+                # f"Look for {item} and available package sizes in grams or ounces. "
+                # f"Target weight needed: {target_weight}g (about {target_oz} oz). "
+                # f"If packages are smaller than {target_weight}g, calculate how many packages are needed to meet or exceed {target_weight}g and add that many to cart. "
+                # f"For example, if target is {target_weight}g and packages are 3g each, add {(target_weight + 2) // 3} packages. "
+                # f"If a package is larger than or equal to {target_weight}g, add 1 to cart. "
+                # f"Prefer the option closest to {target_weight}g without going significantly over. Do not add multiple packages if not needed. "
             )
         else:
             # Fallback to smallest pack if weight estimation fails
@@ -240,7 +251,7 @@ for entry in shopping_list:
 instruction += "Return the total number of items in cart."
 
 # Use it:
-nova = NovaAct(starting_page="https://www.instacart.com")
+nova = NovaAct(starting_page="https://www.ubereats.com")
 
 nova.start()
 result = nova.act(instruction, max_steps=99)
@@ -268,8 +279,8 @@ print("STEP 2: Extracting cart details...")
 print("="*50)
 
 cart_extraction_instruction = (
-    "You are on the Instacart cart page. "
-    "Look at all items already added in the cart by you earlier and extract the following information for each item: "
+    "You are on the Ubereats page and on cart section. "
+    "Look at all items already added in the cart by you earlier and scroll if necessary and extract the following information for each item: "
     "product name, quantity, price per unit, total price, and package size. "
     "Format your response as a simple list like this:\n"
     "Item 1: [name] | Qty: [number] | Price: $[amount] | Size: [size]\n"
@@ -294,14 +305,14 @@ try:
     print("="*50)
     
     # Save to text file
-    # with open("instacart_cart_details.txt", "w") as f:
+    # with open("uber_cart_details.txt", "w") as f:
     #     f.write("INSTACART CART DETAILS\n")
     #     f.write("="*50 + "\n\n")
     #     f.write(cart_text)
     #     f.write("\n\n" + "="*50 + "\n")
     #     f.write(f"Extraction Date: {os.popen('date').read().strip()}\n")
     
-    # print("\n✓ Cart details saved to instacart_cart_details.txt")
+    # print("\n✓ Cart details saved to uber_cart_details.txt")
     
     # Try to parse into structured format using regex
     cart_items = []
@@ -329,17 +340,14 @@ try:
         "cart_items": cart_items,
         "extraction_successful": len(cart_items) > 0
     }
- 
-
-    os.makedirs("../../cart_jsons", exist_ok=True)
-    # Save JSON
-    output_path = Path(__file__).resolve().parents[2] / "cart_jsons" / "instacart_cart_details.json"
+    # Output path relative to working directory (backend/data/)
+    output_path = Path("cart_jsons") / "uber_cart_details.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
-    # Save JSON
-    # with open("../../json_cart/instacart_cart_details.json", "w") as f:
+    # with open("../../cart_json/uber_cart_details.json", "w") as f:
         json.dump(cart_data, f, indent=2)
     
-    print("✓ Structured data saved to instacart_cart_details.json")
+    print("✓ Structured data saved to uber_cart_details.json")
     
     if cart_items:
         print(f"\nParsed {len(cart_items)} items:")

@@ -22,12 +22,12 @@ def write_shopping_list(items: List[IngredientInput]) -> bool:
         output_path.parent.mkdir(parents=True, exist_ok=True)
         
         # Convert Pydantic models to dict
+        # Format matches what agents expect: {"shopping_list": [{"item": "...", "quantity": ...}]}
         data = {
-            "items": [
+            "shopping_list": [
                 {
-                    "name": item.name,
-                    "quantity": item.quantity,
-                    "unit": item.unit or ""
+                    "item": item.name,
+                    "quantity": item.quantity
                 }
                 for item in items
             ]

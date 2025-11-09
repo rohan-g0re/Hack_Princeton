@@ -1,2 +1,0 @@
-# Knot API integration package
-

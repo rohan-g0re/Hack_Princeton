@@ -7,7 +7,7 @@ class Settings(BaseSettings):
     """Application configuration loaded from .env"""
     
     # Paths
-    data_dir: str = "../current_code"
+    data_dir: str = "./data"
     
     # Gemini
     gemini_api_key: str = ""

@@ -331,9 +331,9 @@ try:
     }
  
 
-    os.makedirs("../../cart_jsons", exist_ok=True)
-    # Save JSON
-    output_path = Path(__file__).resolve().parents[2] / "cart_jsons" / "instacart_cart_details.json"
+    # Output path relative to working directory (backend/data/)
+    output_path = Path("cart_jsons") / "instacart_cart_details.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
     # Save JSON
     # with open("../../json_cart/instacart_cart_details.json", "w") as f:

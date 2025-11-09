@@ -5,18 +5,16 @@ from typing import Optional
 from app.config import settings
 from app.models.ingredient import Ingredient
 
-# Add current_code to Python path
-sys.path.insert(0, str(settings.data_dir_path))
-
+# Import from app/services/gemini_recipe
 try:
-    from gemini_recipe import recipe_to_shopping_list, ingredients_to_shopping_list
+    from app.services.gemini_recipe import recipe_to_shopping_list, ingredients_to_shopping_list
 except ImportError as e:
-    raise RuntimeError(f"Cannot import from current_code/gemini_recipe.py: {e}")
+    raise RuntimeError(f"Cannot import from app/services/gemini_recipe.py: {e}")
 
 
 def fetch_ingredients_for_recipe(recipe_name: str) -> list[Ingredient]:
     """
-    Adapter to call current_code/gemini_recipe.py and normalize to Ingredient models.
+    Adapter to call app/services/gemini_recipe.py and normalize to Ingredient models.
     Returns empty list on failure.
     """
     try:
